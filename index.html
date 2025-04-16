@@ -87,48 +87,59 @@
   </div>
 
   <script>
-    // === TIME & DATE ===
-    function updateTime() {
-      const now = new Date();
-      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      const date = now.toLocaleDateString(undefined, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      document.getElementById('time').textContent = time;
-      document.getElementById('seconds').textContent = seconds;
-      document.getElementById('date').textContent = date;
-    }
+    document.addEventListener('DOMContentLoaded', () => {
+      // === TIME & DATE ===
+      function updateTime() {
+        const now = new Date();
+        const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const date = now.toLocaleDateString(undefined, {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
 
-    setInterval(updateTime, 1000);
-    updateTime();
+        const timeEl = document.getElementById('time');
+        const secEl = document.getElementById('seconds');
+        const dateEl = document.getElementById('date');
 
-    // === TEMPERATURE (Fahrenheit) from wttr.in ===
-    fetch('https://wttr.in/02760?format=%t&u')
-      .then(response => response.text())
-      .then(temp => {
-        const cleanTemp = temp.replace('+', '').trim() + '°';
-        document.getElementById('temp').textContent = cleanTemp;
-      })
-      .catch(err => {
-        console.error('Weather fetch failed:', err);
-        document.getElementById('temp').textContent = 'Weather unavailable';
-      });
+        if (timeEl && secEl && dateEl) {
+          timeEl.innerText = time;
+          secEl.innerText = seconds;
+          dateEl.innerText = date;
+        }
+      }
 
-    // === UNSPLASH BACKGROUND ===
-    const accessKey = 'x9tn_Vj-cwh63aeES7g4ttJ6us_lGl9xoiwOShC7zKM';
-    fetch(`https://api.unsplash.com/photos/random?query=landscape&orientation=landscape&client_id=${accessKey}`)
-      .then(response => response.json())
-      .then(data => {
-        const imageUrl = data.urls.full;
-        document.body.style.backgroundImage = `url(${imageUrl})`;
-      })
-      .catch(err => {
-        console.error('Unsplash image failed:', err);
-      });
+      setInterval(updateTime, 1000);
+      updateTime();
+
+      // === TEMPERATURE (Fahrenheit) from wttr.in ===
+      fetch('https://wttr.in/02760?format=%t&u')
+        .then(response => response.text())
+        .then(temp => {
+          const cleanTemp = temp.replace('+', '').trim() + '°';
+          const tempEl = document.getElementById('temp');
+          if (tempEl) tempEl.innerText = cleanTemp;
+        })
+        .catch(err => {
+          console.error('Weather fetch failed:', err);
+          const tempEl = document.getElementById('temp');
+          if (tempEl) tempEl.innerText = 'Weather unavailable';
+        });
+
+      // === UNSPLASH BACKGROUND ===
+      const accessKey = 'x9tn_Vj-cwh63aeES7g4ttJ6us_lGl9xoiwOShC7zKM';
+      fetch(`https://api.unsplash.com/photos/random?query=landscape&orientation=landscape&client_id=${accessKey}`)
+        .then(response => response.json())
+        .then(data => {
+          const imageUrl = data.urls.full;
+          document.body.style.backgroundImage = `url(${imageUrl})`;
+        })
+        .catch(err => {
+          console.error('Unsplash image failed:', err);
+        });
+    });
   </script>
 </body>
 </html>
