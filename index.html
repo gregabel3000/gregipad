@@ -92,11 +92,18 @@
         document.getElementById('temp').textContent = 'Weather unavailable';
       });
 
-    // === BACKGROUND IMAGE from pic-placeholder ===
-    const category = 'landscapes'; // try "animals", "cats", "dogs", "people", "houses" too
-    const timestamp = Date.now();
-    const imageUrl = `https://pic-placeholder.vercel.app/api/random/${category}?t=${timestamp}&width=1600&height=900`;
-    document.body.style.backgroundImage = `url(${imageUrl})`;
+    // === UNSPLASH BACKGROUND ===
+    const accessKey = 'x9tn_Vj-cwh63aeES7g4ttJ6us_lGl9xoiwOShC7zKM';
+    fetch(`https://api.unsplash.com/photos/random?query=landscape&orientation=landscape&client_id=${accessKey}`)
+      .then(response => response.json())
+      .then(data => {
+        const imageUrl = data.urls.full;
+        document.body.style.backgroundImage = `url(${imageUrl})`;
+      })
+      .catch(err => {
+        console.error('Unsplash image failed:', err);
+      });
   </script>
 </body>
 </html>
+
