@@ -44,8 +44,6 @@
     }
 
     #time-wrapper {
-      display: flex;
-      align-items: flex-end;
       font-weight: 600;
       line-height: 1;
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
@@ -54,12 +52,6 @@
 
     #time-main {
       font-size: inherit;
-    }
-
-    #seconds {
-      font-size: 4vh;
-      margin-left: 4px;
-      margin-bottom: 8px;
     }
 
     #date {
@@ -79,7 +71,7 @@
   <div id="content">
     <div id="left">
       <div id="time-wrapper">
-        <span id="time-main">--:--</span><span id="seconds">--</span>
+        <span id="time-main">--:--:-- AM</span>
       </div>
       <div id="date">Loading date...</div>
     </div>
@@ -97,7 +89,7 @@
         const minutes = now.getMinutes().toString().padStart(2, '0');
         const seconds = now.getSeconds().toString().padStart(2, '0');
         const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
-        const timeMain = `${hours}:${minutes}`;
+        const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
 
         const date = now.toLocaleDateString(undefined, {
           weekday: 'long',
@@ -107,12 +99,10 @@
         });
 
         const timeMainEl = document.getElementById('time-main');
-        const secEl = document.getElementById('seconds');
         const dateEl = document.getElementById('date');
 
-        if (timeMainEl && secEl && dateEl) {
-          timeMainEl.innerText = `${timeMain} ${ampm}`;
-          secEl.innerText = seconds;
+        if (timeMainEl && dateEl) {
+          timeMainEl.innerText = timeString;
           dateEl.innerText = date;
         }
       }
@@ -124,7 +114,8 @@
       fetch('https://wttr.in/02760?format=%t&u')
         .then(response => response.text())
         .then(temp => {
-          const cleanTemp = temp.replace('+', '').trim() + '°';
+          const cleaned = temp.replace(/[+°]/g, '').trim();
+          const cleanTemp = cleaned + '°F';
           const tempEl = document.getElementById('temp');
           if (tempEl) tempEl.innerText = cleanTemp;
         })
