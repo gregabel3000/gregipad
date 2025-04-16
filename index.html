@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>iPad Dashboard</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      width: 100%;
+      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+      color: white;
+      background-color: #000;
+      text-align: center;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      position: relative;
+    }
+
+    #overlay {
+      background-color: rgba(0, 0, 0, 0.4);
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 1;
+    }
+
+    #content {
+      position: relative;
+      z-index: 2;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 0 20px;
+    }
+
+    #time {
+      font-size: 20vh;
+      font-weight: 600;
+      line-height: 1;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+
+    #date {
+      font-size: 5vh;
+      margin-top: 2vh;
+      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+    }
+
+    #temp {
+      font-size: 4vh;
+      margin-top: 3vh;
+      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+    }
+  </style>
+</head>
+<body>
+  <div id="overlay"></div>
+  <div id="content">
+    <div id="time">--:--</div>
+    <div id="date">Loading date...</div>
+    <div id="temp">Loading weather...</div>
+  </div>
+
+  <script>
+    // === TIME & DATE ===
+    function updateTime() {
+      const now = new Date();
+      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const date = now.toLocaleDateString(undefined, {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      document.getElementById('time').textContent = time;
+      document.getElementById('date').textContent = date;
+    }
+
+    setInterval(updateTime, 1000);
+    updateTime();
+
+    // === TEMPERATURE (Fahrenheit) from wttr.in ===
+    fetch('https://wttr.in/02760?format=%t&u')
+      .then(response => response.text())
+      .then(temp => {
+        document.getElementById('temp').textContent = temp;
+      })
+      .catch(err => {
+        document.getElementById('temp').textContent = 'Weather unavailable';
+      });
+
+    // === BACKGROUND IMAGE from pic-placeholder ===
+    const category = 'landscapes'; // try "animals", "cats", "dogs", "people", "houses" too
+    const timestamp = Date.now();
+    const imageUrl = `https://pic-placeholder.vercel.app/api/random/${category}?t=${timestamp}&width=1600&height=900`;
+    document.body.style.backgroundImage = `url(${imageUrl})`;
+  </script>
+</body>
+</html>
