@@ -11,7 +11,6 @@
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
       color: white;
       background-color: #000;
-      text-align: center;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -44,11 +43,15 @@
       text-align: right;
     }
 
-    #time {
+    #time-wrapper {
       font-size: 12vh;
       font-weight: 600;
       line-height: 1;
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+    }
+
+    #time {
+      font-size: 12vh;
     }
 
     #seconds {
@@ -73,7 +76,9 @@
   <div id="overlay"></div>
   <div id="content">
     <div id="left">
-      <div id="time">--:--<span id="seconds">--</span></div>
+      <div id="time-wrapper">
+        <span id="time">--:--</span><span id="seconds">--</span>
+      </div>
       <div id="date">Loading date...</div>
     </div>
     <div id="right">
@@ -105,11 +110,11 @@
     fetch('https://wttr.in/02760?format=%t&u')
       .then(response => response.text())
       .then(temp => {
-        // Remove leading '+' and append ° symbol
         const cleanTemp = temp.replace('+', '').trim() + '°';
         document.getElementById('temp').textContent = cleanTemp;
       })
       .catch(err => {
+        console.error('Weather fetch failed:', err);
         document.getElementById('temp').textContent = 'Weather unavailable';
       });
 
