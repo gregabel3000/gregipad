@@ -114,8 +114,8 @@
       fetch('https://wttr.in/02760?format=%t&u')
         .then(response => response.text())
         .then(temp => {
-          const cleaned = temp.replace(/[+°]/g, '').trim();
-          const cleanTemp = cleaned + '°F';
+          const cleaned = temp.replace(/\+/g, '').trim();
+          const cleanTemp = cleaned.endsWith('°') ? cleaned + 'F' : cleaned + '°F';
           const tempEl = document.getElementById('temp');
           if (tempEl) tempEl.innerText = cleanTemp;
         })
