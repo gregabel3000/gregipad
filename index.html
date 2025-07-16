@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>iPad Dashboard</title>
+  <title>iPad Dashboard (Legacy Edition)</title>
   <style>
     html, body {
       margin: 0;
@@ -28,9 +28,15 @@
       position: relative;
       z-index: 2;
       height: 100%;
+      display: -webkit-box;
+      display: -ms-flexbox;
       display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
+      -webkit-box-pack: justify;
+          -ms-flex-pack: justify;
+              justify-content: space-between;
+      -webkit-box-align: end;
+          -ms-flex-align: end;
+              align-items: flex-end;
       padding: 40px;
       box-sizing: border-box;
     }
@@ -73,7 +79,7 @@
       <div id="time-wrapper">
         <span id="time-main">--:--:-- AM</span>
       </div>
-      <div id="date">Loading date...</div>
+      <div id="date">JS did not run</div>
     </div>
     <div id="right">
       <div id="temp">Loading weather...</div>
@@ -81,80 +87,44 @@
   </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // === TIME & DATE ===
+    window.onload = function() {
       function updateTime() {
-        const now = new Date();
-        const hours = now.getHours() % 12 || 12;
-        const minutes = now.getMinutes().toString().padStart(2, '0');
-        const seconds = now.getSeconds().toString().padStart(2, '0');
-        const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
-        const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
+        var now = new Date();
+        var hours = now.getHours() % 12 || 12;
+        var minutes = ("0" + now.getMinutes()).slice(-2);
+        var seconds = ("0" + now.getSeconds()).slice(-2);
+        var ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+        var timeString = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
 
-        const date = now.toLocaleDateString(undefined, {
-          weekday: 'long',
-          year: 'numeric',
-          month: 'long',
-          day: 'numeric'
-        });
+        var dateString = now.toDateString();
 
-        const timeMainEl = document.getElementById('time-main');
-        const dateEl = document.getElementById('date');
+        var timeMainEl = document.getElementById('time-main');
+        var dateEl = document.getElementById('date');
 
         if (timeMainEl && dateEl) {
           timeMainEl.innerText = timeString;
-          dateEl.innerText = date;
+          dateEl.innerText = dateString;
         }
       }
 
       setInterval(updateTime, 1000);
       updateTime();
 
-      // === TEMPERATURE (Fahrenheit) from wttr.in ===
-      fetch('https://wttr.in/02760?format=%t&u')
-        .then(response => response.text())
-        .then(temp => {
-          const cleaned = temp.replace(/\+/g, '').trim();
-          const cleanTemp = cleaned.endsWith('°') ? cleaned + 'F' : cleaned + '°F';
-          const tempEl = document.getElementById('temp');
-          if (tempEl) tempEl.innerText = cleanTemp;
-        })
-        .catch(err => {
-          console.error('Weather fetch failed:', err);
-          const tempEl = document.getElementById('temp');
-          if (tempEl) tempEl.innerText = 'Weather unavailable';
-        });
+      // Weather using XMLHttpRequest
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://wttr.in/02760?format=%t&u', true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+          var temp = xhr.responseText.replace(/[+\u00B0F]/g, '').trim() + '°';
+          var tempEl = document.getElementById('temp');
+          if (tempEl) tempEl.innerText = temp;
+        }
+      };
+      xhr.send();
 
-      // === BACKGROUND BASED ON WEATHER CONDITIONS (Open-Meteo) ===
-      const now = new Date();
-      const currentHour = now.getHours();
-      const accessKey = 'x9tn_Vj-cwh63aeES7g4ttJ6us_lGl9xoiwOShC7zKM';
-
-      if (currentHour >= 6) {
-        fetch('https://api.open-meteo.com/v1/forecast?latitude=41.97&longitude=-71.33&current_weather=true')
-          .then(res => res.json())
-          .then(data => {
-            const code = data.current_weather.weathercode;
-            let keyword = 'nature';
-
-            if ([0, 1].includes(code)) keyword = 'sunny';
-            else if ([2, 3].includes(code)) keyword = 'cloudy';
-            else if ([45, 48].includes(code)) keyword = 'foggy';
-            else if ([51, 53, 55, 61, 63, 65, 80, 81, 82].includes(code)) keyword = 'rain';
-            else if ([71, 73, 75, 85, 86].includes(code)) keyword = 'snow';
-            else if ([95, 96, 99].includes(code)) keyword = 'storm';
-
-            fetch(`https://api.unsplash.com/photos/random?query=${keyword}&orientation=landscape&client_id=${accessKey}`)
-              .then(response => response.json())
-              .then(photo => {
-                const imageUrl = photo.urls.full;
-                document.body.style.backgroundImage = `url(${imageUrl})`;
-              })
-              .catch(err => console.error('Unsplash fetch failed:', err));
-          })
-          .catch(err => console.error('Weather API fetch failed:', err));
-      }
-    });
+      // Static fallback background image
+      document.body.style.backgroundImage = "url('https://source.unsplash.com/1600x900/?landscape')";
+    };
   </script>
 </body>
 </html>
