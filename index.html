@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>iPad Dashboard (Legacy Edition v2)</title>
+  <title>iPad Dashboard (Legacy Edition v3)</title>
   <style>
     html, body {
       margin: 0;
@@ -43,19 +43,15 @@
 
     #left {
       text-align: left;
-      width: 60%;
-      min-width: 300px;
-    }
-
-    #right {
-      text-align: right;
+      width: 100%;
     }
 
     #time-wrapper {
       font-weight: 600;
-      line-height: 1;
+      line-height: 1.1;
+      white-space: nowrap;
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-      font-size: 20vh;
+      font-size: 120px;
     }
 
     #time-main {
@@ -63,15 +59,9 @@
     }
 
     #date {
-      font-size: 4vh;
-      margin-top: 1vh;
+      font-size: 40px;
+      margin-top: 10px;
       text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
-    }
-
-    #temp {
-      font-size: 5vh;
-      text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
-      word-break: break-word;
     }
   </style>
 </head>
@@ -83,9 +73,6 @@
         <span id="time-main">--:--:-- AM</span>
       </div>
       <div id="date">JS did not run</div>
-    </div>
-    <div id="right">
-      <div id="temp">Loading weather...</div>
     </div>
   </div>
 
@@ -112,26 +99,6 @@
 
       setInterval(updateTime, 1000);
       updateTime();
-
-      // Weather using XMLHttpRequest (debugging fallback)
-      var xhr = new XMLHttpRequest();
-      xhr.open('GET', 'https://wttr.in/02760?format=%t&u', true);
-      xhr.onreadystatechange = function() {
-        var tempEl = document.getElementById('temp');
-        if (xhr.readyState === 4) {
-          if (xhr.status === 200) {
-            var raw = xhr.responseText;
-            tempEl.innerText = "RAW: " + raw;
-          } else {
-            tempEl.innerText = 'Weather unavailable';
-          }
-        }
-      };
-      xhr.onerror = function() {
-        var tempEl = document.getElementById('temp');
-        tempEl.innerText = 'Weather error';
-      };
-      xhr.send();
 
       // Static fallback background image
       document.body.style.backgroundImage = "url('https://source.unsplash.com/1600x900/?landscape')";
