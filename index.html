@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>iPad Dashboard (Legacy Edition v4)</title>
+  <title>iPad Dashboard (Legacy Edition v5)</title>
   <style>
     html, body {
       margin: 0;
@@ -10,11 +10,11 @@
       width: 100%;
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
       color: white;
-      background-color: #000;
+      position: relative;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      position: relative;
+      background-color: black;
     }
 
     #overlay {
@@ -85,7 +85,6 @@
         var seconds = ("0" + now.getSeconds()).slice(-2);
         var ampm = now.getHours() >= 12 ? 'PM' : 'AM';
         var timeString = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
-
         var dateString = now.toDateString();
 
         var timeMainEl = document.getElementById('time-main');
@@ -100,8 +99,22 @@
       setInterval(updateTime, 1000);
       updateTime();
 
-      // ✅ Static fallback background image — very iPad compatible
-      document.body.style.backgroundImage = "url('https://upload.wikimedia.org/wikipedia/commons/0/02/Mt_Rainier_from_above_Myrtle_Falls_in_paradise.jpg')";
+      // Rotate background gradient
+      var gradients = [
+        "linear-gradient(to right, #1e3c72, #2a5298)",
+        "linear-gradient(to right, #ff9966, #ff5e62)",
+        "linear-gradient(to right, #00b09b, #96c93d)",
+        "linear-gradient(to right, #654ea3, #eaafc8)",
+        "linear-gradient(to right, #2193b0, #6dd5ed)",
+        "linear-gradient(to right, #ee9ca7, #ffdde1)"
+      ];
+      var randomIndex = Math.floor(Math.random() * gradients.length);
+      document.body.style.backgroundImage = gradients[randomIndex];
+
+      // Auto-reload every 6 hours
+      setTimeout(function() {
+        location.reload();
+      }, 6 * 60 * 60 * 1000); // 6 hours in milliseconds
     };
   </script>
 </body>
