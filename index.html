@@ -53,7 +53,7 @@
       font-weight: 600;
       line-height: 1;
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-      font-size: 12vh;
+      font-size: 20vh;
     }
 
     #time-main {
@@ -114,10 +114,14 @@
       var xhr = new XMLHttpRequest();
       xhr.open('GET', 'https://wttr.in/02760?format=%t&u', true);
       xhr.onreadystatechange = function() {
-        if (xhr.readyState == 4 && xhr.status == 200) {
-          var temp = xhr.responseText.replace(/[+\u00B0F]/g, '').trim() + '°';
-          var tempEl = document.getElementById('temp');
-          if (tempEl) tempEl.innerText = temp;
+        var tempEl = document.getElementById('temp');
+        if (xhr.readyState === 4) {
+          if (xhr.status === 200) {
+            var temp = xhr.responseText.replace(/[+\u00B0F]/g, '').trim() + '°';
+            if (tempEl) tempEl.innerText = temp;
+          } else {
+            if (tempEl) tempEl.innerText = 'Weather unavailable';
+          }
         }
       };
       xhr.send();
