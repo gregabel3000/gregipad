@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>iPad Dashboard</title>
+  <title>iPad Dashboard (Legacy Edition)</title>
   <style>
     html, body {
       margin: 0;
@@ -11,7 +11,6 @@
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
       color: white;
       background-color: #000;
-      text-align: center;
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
@@ -29,29 +28,46 @@
       position: relative;
       z-index: 2;
       height: 100%;
+      display: -webkit-box;
+      display: -ms-flexbox;
       display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 0 20px;
+      -webkit-box-pack: justify;
+          -ms-flex-pack: justify;
+              justify-content: space-between;
+      -webkit-box-align: end;
+          -ms-flex-align: end;
+              align-items: flex-end;
+      padding: 40px;
+      box-sizing: border-box;
     }
 
-    #time {
-      font-size: 20vh;
+    #left {
+      text-align: left;
+    }
+
+    #right {
+      text-align: right;
+    }
+
+    #time-wrapper {
       font-weight: 600;
       line-height: 1;
       text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+      font-size: 12vh;
+    }
+
+    #time-main {
+      font-size: inherit;
     }
 
     #date {
-      font-size: 5vh;
-      margin-top: 2vh;
+      font-size: 4vh;
+      margin-top: 1vh;
       text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
     }
 
     #temp {
-      font-size: 4vh;
-      margin-top: 3vh;
+      font-size: 5vh;
       text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
     }
   </style>
@@ -59,44 +75,58 @@
 <body>
   <div id="overlay"></div>
   <div id="content">
-    <div id="time">--:--</div>
-    <div id="date">Loading date...</div>
-    <div id="temp">Loading weather...</div>
+    <div id="left">
+      <div id="time-wrapper">
+        <span id="time-main">--:--:-- AM</span>
+      </div>
+      <div id="date">Loading date...</div>
+    </div>
+    <div id="right">
+      <div id="temp">Loading weather...</div>
+    </div>
   </div>
 
   <script>
-    // === TIME & DATE ===
-    function updateTime() {
-      const now = new Date();
-      const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      const date = now.toLocaleDateString(undefined, {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      });
-      document.getElementById('time').textContent = time;
-      document.getElementById('date').textContent = date;
-    }
+    window.onload = function() {
+      function updateTime() {
+        var now = new Date();
+        var hours = now.getHours() % 12 || 12;
+        var minutes = ("0" + now.getMinutes()).slice(-2);
+        var seconds = ("0" + now.getSeconds()).slice(-2);
+        var ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+        var timeString = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
 
-    setInterval(updateTime, 1000);
-    updateTime();
+        var dateString = now.toLocaleDateString(undefined, {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+        });
 
-    // === TEMPERATURE (Fahrenheit) from wttr.in ===
-    fetch('https://wttr.in/02760?format=%t&u')
-      .then(response => response.text())
-      .then(temp => {
-        document.getElementById('temp').textContent = temp;
-      })
-      .catch(err => {
-        document.getElementById('temp').textContent = 'Weather unavailable';
-      });
+        var timeMainEl = document.getElementById('time-main');
+        var dateEl = document.getElementById('date');
 
-    // === BACKGROUND IMAGE from pic-placeholder ===
-    const category = 'landscapes'; // try "animals", "cats", "dogs", "people", "houses" too
-    const timestamp = Date.now();
-    const imageUrl = `https://pic-placeholder.vercel.app/api/random/${category}?t=${timestamp}&width=1600&height=900`;
-    document.body.style.backgroundImage = `url(${imageUrl})`;
+        if (timeMainEl && dateEl) {
+          timeMainEl.innerText = timeString;
+          dateEl.innerText = dateString;
+        }
+      }
+
+      setInterval(updateTime, 1000);
+      updateTime();
+
+      // Weather using XMLHttpRequest
+      var xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://wttr.in/02760?format=%t&u', true);
+      xhr.onreadystatechange = function() {
+        if (xhr.readyState == 4 && xhr.status == 200) {
+          var temp = xhr.responseText.replace(/[+°F]/g, '').trim() + '°';
+          var tempEl = document.getElementById('temp');
+          if (tempEl) tempEl.innerText = temp;
+        }
+      };
+      xhr.send();
+
+      // Static fallback background image
+      document.body.style.backgroundImage = "url('https://source.unsplash.com/1600x900/?landscape')";
+    };
   </script>
 </body>
 </html>
