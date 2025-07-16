@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>iPad Dashboard (Legacy Edition v1)</title>
+  <title>iPad Dashboard (Legacy Edition v2)</title>
   <style>
     html, body {
       margin: 0;
@@ -43,6 +43,8 @@
 
     #left {
       text-align: left;
+      width: 60%;
+      min-width: 300px;
     }
 
     #right {
@@ -69,6 +71,7 @@
     #temp {
       font-size: 5vh;
       text-shadow: 0 1px 6px rgba(0, 0, 0, 0.6);
+      word-break: break-word;
     }
   </style>
 </head>
@@ -110,19 +113,23 @@
       setInterval(updateTime, 1000);
       updateTime();
 
-      // Weather using XMLHttpRequest
+      // Weather using XMLHttpRequest (debugging fallback)
       var xhr = new XMLHttpRequest();
       xhr.open('GET', 'https://wttr.in/02760?format=%t&u', true);
       xhr.onreadystatechange = function() {
         var tempEl = document.getElementById('temp');
         if (xhr.readyState === 4) {
           if (xhr.status === 200) {
-            var temp = xhr.responseText.replace(/[+\u00B0F]/g, '').trim() + '°';
-            if (tempEl) tempEl.innerText = temp;
+            var raw = xhr.responseText;
+            tempEl.innerText = "RAW: " + raw;
           } else {
-            if (tempEl) tempEl.innerText = 'Weather unavailable';
+            tempEl.innerText = 'Weather unavailable';
           }
         }
+      };
+      xhr.onerror = function() {
+        var tempEl = document.getElementById('temp');
+        tempEl.innerText = 'Weather error';
       };
       xhr.send();
 
