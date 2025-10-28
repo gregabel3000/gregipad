@@ -1,13 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-
-<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Dashboard">
-  
-  <title>iPad Dashboard (Legacy Edition v5)</title>
+  <title>iPad Dashboard (Legacy Edition v6)</title>
   <style>
     html, body {
       margin: 0;
@@ -21,10 +15,19 @@
       background-position: center;
       background-repeat: no-repeat;
       background-color: black;
+      overflow: hidden;
+    }
+
+    #gradient-bg {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      z-index: 0;
+      background: black;
+      transition: background 1s ease-in-out;
     }
 
     #overlay {
-      background-color: rgba(0, 0, 0, 0.4);
+      background-color: rgba(0, 0, 0, 0.3);
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       z-index: 1;
@@ -34,15 +37,9 @@
       position: relative;
       z-index: 2;
       height: 100%;
-      display: -webkit-box;
-      display: -ms-flexbox;
       display: flex;
-      -webkit-box-pack: justify;
-          -ms-flex-pack: justify;
-              justify-content: space-between;
-      -webkit-box-align: end;
-          -ms-flex-align: end;
-              align-items: flex-end;
+      justify-content: space-between;
+      align-items: flex-end;
       padding: 40px;
       box-sizing: border-box;
     }
@@ -72,6 +69,7 @@
   </style>
 </head>
 <body>
+  <div id="gradient-bg"></div>
   <div id="overlay"></div>
   <div id="content">
     <div id="left">
@@ -84,6 +82,7 @@
 
   <script>
     window.onload = function() {
+      // Update clock
       function updateTime() {
         var now = new Date();
         var hours = now.getHours() % 12 || 12;
@@ -105,22 +104,32 @@
       setInterval(updateTime, 1000);
       updateTime();
 
-      // Rotate background gradient
+      // --- Hybrid background setup ---
       var gradients = [
         "linear-gradient(to right, #1e3c72, #2a5298)",
-        "linear-gradient(to right, #ff9966, #ff5e62)",
-        "linear-gradient(to right, #00b09b, #96c93d)",
         "linear-gradient(to right, #654ea3, #eaafc8)",
+        "linear-gradient(to right, #00b09b, #96c93d)",
         "linear-gradient(to right, #2193b0, #6dd5ed)",
         "linear-gradient(to right, #ee9ca7, #ffdde1)"
       ];
-      var randomIndex = Math.floor(Math.random() * gradients.length);
-      document.body.style.backgroundImage = gradients[randomIndex];
 
-      // Auto-reload every 6 hours
+      var bgEl = document.getElementById('gradient-bg');
+      bgEl.style.background = gradients[Math.floor(Math.random() * gradients.length)];
+
+      // Try to load a random Unsplash image
+      var img = new Image();
+      img.onload = function() {
+        document.body.style.backgroundImage = "url('" + img.src + "')";
+      };
+      img.onerror = function() {
+        console.log("Image failed to load; using gradient only.");
+      };
+      img.src = "https://source.unsplash.com/random/1600x900/?landscape,nature";
+
+      // Auto reload every 6 hours
       setTimeout(function() {
         location.reload();
-      }, 6 * 60 * 60 * 1000); // 6 hours in milliseconds
+      }, 6 * 60 * 60 * 1000);
     };
   </script>
 </body>
