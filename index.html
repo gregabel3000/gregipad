@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>iPad Dashboard (Legacy Edition v11)</title>
+  <title>iPad Dashboard (Legacy Edition v11 - Debug)</title>
   <style>
     html, body {
       margin: 0;
@@ -80,6 +80,10 @@
       padding: 6px 10px; 
       border-radius:6px; 
       font-size:13px; 
+      max-width: calc(100% - 150px);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
     }
 
     /* version badge */
@@ -111,64 +115,167 @@
   </div>
 
   <div id="diag">Starting...</div>
-  <div id="version-badge">v11</div>
+  <div id="version-badge">v11-debug</div>
 
   <script>
-    window.onload = function() {
-      function setDiag(msg) { 
-        var d = document.getElementById('diag'); 
-        if (d) d.innerText = msg; 
-        console.log(msg); 
+    (function () {
+      // Safe guard to show any exception in the diag box + console
+      function setDiag(msg) {
+        try {
+          var d = document.getElementById('diag');
+          if (d) d.innerText = msg;
+        } catch (e) { /* ignore */ }
+        try { console.log(msg); } catch (e) { }
       }
 
-      // Update clock
-      function updateTime() {
-        var now = new Date();
-        var hours = now.getHours() % 12 || 12;
-        var minutes = ("0" + now.getMinutes()).slice(-2);
-        var seconds = ("0" + now.getSeconds()).slice(-2);
-        var ampm = now.getHours() >= 12 ? 'PM' : 'AM';
-        var timeString = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
-        var dateString = now.toDateString();
+      // Global error handler to make sure we see what's failing
+      window.addEventListener('error', function (ev) {
+        var msg = 'ERROR: ' + (ev && ev.message ? ev.message : JSON.stringify(ev));
+        setDiag(msg);
+        console.error(ev.error || ev);
+      });
 
-        var timeMainEl = document.getElementById('time-main');
-        var dateEl = document.getElementById('date');
+      window.addEventListener('unhandledrejection', function (ev) {
+        var reason = ev && ev.reason ? ev.reason : 'unhandled rejection';
+        setDiag('Promise Rejection: ' + (reason && reason.message ? reason.message : String(reason)));
+        console.error(ev);
+      });
 
-        if (timeMainEl && dateEl) {
-          timeMainEl.innerText = timeString;
-          dateEl.innerText = dateString;
+      // Wrap main logic in try/catch so clock still runs even if other code breaks
+      try {
+        // --------- Clock ---------
+        function updateTime() {
+          try {
+            var now = new Date();
+            var hours = now.getHours() % 12 || 12;
+            var minutes = ("0" + now.getMinutes()).slice(-2);
+            var seconds = ("0" + now.getSeconds()).slice(-2);
+            var ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+            var timeString = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
+            var dateString = now.toDateString();
+
+            var timeMainEl = document.getElementById('time-main');
+            var dateEl = document.getElementById('date');
+
+            if (timeMainEl) timeMainEl.innerText = timeString;
+            if (dateEl) dateEl.innerText = dateString;
+          } catch (err) {
+            setDiag('Clock error: ' + (err && err.message ? err.message : String(err)));
+            console.error(err);
+          }
         }
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // --------- Background / Image loader (non-blocking) ---------
+        var bgEl = document.getElementById('gradient-bg');
+
+        // Use a random gradient as immediate fallback
+        var gradients = [
+          "linear-gradient(to right, rgba(30,60,114,0.6), rgba(42,82,152,0.35))",
+          "linear-gradient(to right, rgba(101,78,163,0.6), rgba(234,175,200,0.35))",
+          "linear-gradient(to right, rgba(0,176,155,0.6), rgba(150,201,61,0.35))"
+        ];
+        var chosenGradient = gradients[Math.floor(Math.random() * gradients.length)];
+        try {
+          if (bgEl) {
+            bgEl.style.background = chosenGradient;
+            bgEl.style.backgroundSize = 'cover';
+            bgEl.style.backgroundPosition = 'center';
+          }
+        } catch (e) { /* non-fatal */ }
+
+        // Image loading logic isolated and wrapped
+        (function loadBackgroundImage() {
+          try {
+            var pexelsIds = [
+              414612, 2014422, 326055, 158607, 34950,
+              3156381, 1420706, 247932, 355423, 1108099
+            ];
+
+            function pexelsUrlForId(id) {
+              return "https://images.pexels.com/photos/" + id + "/pexels-photo-" + id + ".jpeg";
+            }
+
+            function getTargetWidth(maxCap) {
+              maxCap = maxCap || 1280;
+              var w = Math.min(maxCap, Math.round(window.innerWidth || maxCap));
+              return Math.max(640, w);
+            }
+
+            function buildPexelsVariant(url, width, height, quality) {
+              var q = quality || 80;
+              var hParam = height ? "&h=" + height : "";
+              return url + "?auto=compress&cs=tinysrgb&dpr=1&w=" + width + hParam + "&q=" + q;
+            }
+
+            function tryImageSequence(urls, onSuccess, onFail) {
+              var i = 0;
+              function next() {
+                if (i >= urls.length) { onFail(); return; }
+                var u = urls[i++];
+                setDiag('Trying image: ' + (u.length > 80 ? u.slice(0, 80) + '...' : u));
+                var t = new Image();
+                t.onload = function () { onSuccess(u); };
+                t.onerror = function () { next(); };
+                // start loading
+                t.src = u;
+              }
+              // Kick it off asynchronously
+              setTimeout(next, 10);
+            }
+
+            function pickRandomId() {
+              return pexelsIds[Math.floor(Math.random() * pexelsIds.length)];
+            }
+
+            var chosenId = pickRandomId();
+            var base = pexelsUrlForId(chosenId);
+            var targetW = getTargetWidth(1280);
+            var small = buildPexelsVariant(base, targetW, null, 80);
+            var medium = buildPexelsVariant(base, Math.min(1920, Math.round(targetW * 1.25)), null, 84);
+            var original = base;
+            var localFallback = "https://gregabel3000.github.io/gregipad/images/bg1.svg";
+
+            tryImageSequence([small, medium, original, localFallback],
+              function (workingUrl) {
+                try {
+                  setDiag('Loaded background');
+                  if (bgEl) {
+                    // Slight delay so transition shows
+                    bgEl.style.backgroundImage = "url('" + workingUrl + "')";
+                    bgEl.style.backgroundSize = "cover";
+                    bgEl.style.backgroundPosition = "center";
+                    bgEl.style.backgroundRepeat = "no-repeat";
+                  }
+                } catch (err) {
+                  setDiag('Background set error: ' + (err && err.message ? err.message : String(err)));
+                  console.error(err);
+                }
+              },
+              function () {
+                setDiag('All image variants failed; using gradient');
+                // nothing else to do, gradient remains
+              }
+            );
+          } catch (err) {
+            setDiag('Image loader error: ' + (err && err.message ? err.message : String(err)));
+            console.error(err);
+          }
+        })();
+
+        // Auto reload every 6 hours (non-blocking)
+        try {
+          setTimeout(function () { try { location.reload(); } catch (e) { console.error(e); } }, 6 * 60 * 60 * 1000);
+        } catch (e) { /* ignore */ }
+
+        // All set
+        setDiag('Running');
+      } catch (err) {
+        setDiag('Init error: ' + (err && err.message ? err.message : String(err)));
+        console.error(err);
       }
-      updateTime(); 
-      setInterval(updateTime, 1000);
-
-      // Gradient fallback
-      var gradients = [
-        "linear-gradient(to right, rgba(30,60,114,0.6), rgba(42,82,152,0.35))",
-        "linear-gradient(to right, rgba(101,78,163,0.6), rgba(234,175,200,0.35))",
-        "linear-gradient(to right, rgba(0,176,155,0.6), rgba(150,201,61,0.35))"
-      ];
-      var chosenGradient = gradients[Math.floor(Math.random() * gradients.length)];
-      var bgEl = document.getElementById('gradient-bg');
-      bgEl.style.background = chosenGradient;
-      bgEl.style.backgroundSize = 'cover';
-      bgEl.style.backgroundPosition = 'center';
-
-      /* ---------------------------
-         Random Pexels selection logic
-      ---------------------------- */
-
-      var pexelsIds = [
-        414612, 2014422, 326055, 158607, 34950,
-        3156381, 1420706, 247932, 355423, 1108099
-      ];
-
-      function pexelsUrlForId(id) {
-        return "https://images.pexels.com/photos/" + id + "/pexels-photo-" + id + ".jpeg";
-      }
-
-      function getTargetWidth(maxCap) {
-        maxCap = maxCap || 1280;
-        var w = Math.min(maxCap, Math.round(window.innerWidth || maxCap));
-        return Math.max(640, w);
-      }
+    })();
+  </script>
+</body>
+</html>
