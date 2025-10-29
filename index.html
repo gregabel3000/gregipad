@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>iPad Dashboard (Legacy Edition v10)</title>
+  <title>iPad Dashboard (Legacy Edition v11)</title>
   <style>
     html, body {
       margin: 0;
@@ -25,11 +25,11 @@
       background-size: cover;
       background-position: center;
       background-repeat: no-repeat;
-      transition: background 1s ease-in-out;
+      transition: background-image 1s ease-in-out, background 1s ease-in-out;
     }
 
     #overlay {
-      background-color: rgba(0, 0, 0, 0.3);
+      background-color: rgba(0, 0, 0, 0.4);
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       z-index: 1;
@@ -69,25 +69,18 @@
       text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
     }
 
-    /* Photo container styles */
-    #photo-container {
-      margin-top: 18px;
-      margin-bottom: 6px;
-    }
-
-    #local-photo {
-      max-width: 480px;
-      max-height: 360px;
-      width: auto;
-      height: auto;
-      display: block;
-      border-radius: 8px;
-      box-shadow: 0 6px 18px rgba(0,0,0,0.6);
-      border: 1px solid rgba(255,255,255,0.06);
-    }
-
     /* diagnostic box */
-    #diag { position: fixed; top: 12px; left: 12px; z-index: 9999; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px; border-radius:6px; font-size:13px; }
+    #diag { 
+      position: fixed; 
+      top: 12px; 
+      left: 12px; 
+      z-index: 9999; 
+      background: rgba(0,0,0,0.6); 
+      color: #fff; 
+      padding: 6px 10px; 
+      border-radius:6px; 
+      font-size:13px; 
+    }
 
     /* version badge */
     #version-badge {
@@ -114,19 +107,19 @@
         <span id="time-main">--:--:-- AM</span>
       </div>
       <div id="date">JS did not run</div>
-
-      <div id="photo-container" aria-hidden="false">
-        <img id="local-photo" alt="Random Pexels photo" src="" />
-      </div>
     </div>
   </div>
 
   <div id="diag">Starting...</div>
-  <div id="version-badge">v10</div>
+  <div id="version-badge">v11</div>
 
   <script>
     window.onload = function() {
-      function setDiag(msg) { var d = document.getElementById('diag'); if(d) d.innerText = msg; console.log(msg); }
+      function setDiag(msg) { 
+        var d = document.getElementById('diag'); 
+        if (d) d.innerText = msg; 
+        console.log(msg); 
+      }
 
       // Update clock
       function updateTime() {
@@ -146,9 +139,10 @@
           dateEl.innerText = dateString;
         }
       }
-      updateTime(); setInterval(updateTime, 1000);
+      updateTime(); 
+      setInterval(updateTime, 1000);
 
-      // Keep the gradient visible as fallback
+      // Gradient fallback
       var gradients = [
         "linear-gradient(to right, rgba(30,60,114,0.6), rgba(42,82,152,0.35))",
         "linear-gradient(to right, rgba(101,78,163,0.6), rgba(234,175,200,0.35))",
@@ -162,83 +156,19 @@
 
       /* ---------------------------
          Random Pexels selection logic
-         - Uses a client-side list of Pexels photo IDs (no API key)
-         - Builds a compressed/width variant (cap 640)
-         - Tries small -> medium -> original -> local fallback
       ---------------------------- */
 
-      // Curated Pexels photo IDs (add more IDs to increase variety)
       var pexelsIds = [
         414612, 2014422, 326055, 158607, 34950,
         3156381, 1420706, 247932, 355423, 1108099
       ];
 
-      // Build a predictable Pexels URL from an ID (works for many Pexels image paths)
       function pexelsUrlForId(id) {
-        // pattern: /photos/{id}/pexels-photo-{id}.jpeg
-        // This mirrors the filename pattern used by many Pexels assets
         return "https://images.pexels.com/photos/" + id + "/pexels-photo-" + id + ".jpeg";
       }
 
-      // getTargetWidth capped (default 640)
       function getTargetWidth(maxCap) {
-        maxCap = maxCap || 640;
+        maxCap = maxCap || 1280;
         var w = Math.min(maxCap, Math.round(window.innerWidth || maxCap));
-        return Math.max(320, w);
+        return Math.max(640, w);
       }
-
-      function buildPexelsVariant(url, width, height, quality) {
-        var q = quality || 80;
-        var hParam = height ? "&h=" + height : "";
-        return url + "?auto=compress&cs=tinysrgb&dpr=1&w=" + width + hParam + "&q=" + q;
-      }
-
-      function tryImageSequence(urls, onSuccess, onFail) {
-        var i = 0;
-        function next() {
-          if (i >= urls.length) { onFail(); return; }
-          var u = urls[i++]; 
-          setDiag('Trying: ' + u);
-          var t = new Image();
-          t.onload = function() { onSuccess(u); };
-          t.onerror = function() { next(); };
-          // start loading
-          t.src = u;
-        }
-        next();
-      }
-
-      // Pick a random ID from the list
-      function pickRandomId() {
-        var idx = Math.floor(Math.random() * pexelsIds.length);
-        return pexelsIds[idx];
-      }
-
-      var chosenId = pickRandomId();
-      var base = pexelsUrlForId(chosenId);
-      var targetW = getTargetWidth(640);
-      var small = buildPexelsVariant(base, targetW, null, 80);
-      var medium = buildPexelsVariant(base, Math.min(1024, Math.round(targetW * 1.25)), null, 84);
-      var original = base;
-      var localFallback = "https://gregabel3000.github.io/gregipad/images/bg1.svg";
-
-      var photoEl = document.getElementById('local-photo');
-
-      tryImageSequence([small, medium, original, localFallback],
-        function(workingUrl) {
-          setDiag('Loaded: ' + workingUrl);
-          photoEl.src = workingUrl;
-          var cont = document.getElementById('photo-container'); if (cont) cont.style.display = '';
-        },
-        function() {
-          setDiag('All variants failed to load.');
-          var cont = document.getElementById('photo-container'); if (cont) cont.style.display = 'none';
-        }
-      );
-
-      // Auto reload every 6 hours
-      setTimeout(function() { location.reload(); }, 6 * 60 * 60 * 1000);
-    };
-  </script>
-</body>
-</html>
