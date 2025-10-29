@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>iPad Dashboard (Legacy Edition v8)</title>
+  <title>iPad Dashboard (Legacy Edition v9)</title>
   <style>
     html, body {
       margin: 0;
@@ -151,7 +151,7 @@
 
       function getTargetWidth(maxCap) {
         maxCap = maxCap || 800;
-        var w = Math.min(maxCap, Math.round(window.innerWidth || 800));
+        var w = Math.min(maxCap, Math.round(window.innerWidth || maxCap));
         var dpr = (window.devicePixelRatio && window.devicePixelRatio <= 2) ? Math.round(window.devicePixelRatio) : 1;
         return Math.max(320, Math.round(w * dpr));
       }
@@ -166,7 +166,7 @@
         var i = 0;
         function next() {
           if (i >= urls.length) { onFail(); return; }
-          var u = urls[i++];
+          var u = urls[i++]; 
           setDiag('Trying: ' + u);
           var t = new Image();
           t.onload = function() { onSuccess(u); };
