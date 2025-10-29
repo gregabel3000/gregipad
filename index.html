@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>iPad Dashboard (Legacy Edition v9)</title>
+  <title>iPad Dashboard (Legacy Edition v10)</title>
   <style>
     html, body {
       margin: 0;
@@ -88,6 +88,21 @@
 
     /* diagnostic box */
     #diag { position: fixed; top: 12px; left: 12px; z-index: 9999; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px; border-radius:6px; font-size:13px; }
+
+    /* version badge */
+    #version-badge {
+      position: fixed;
+      top: 12px;
+      right: 12px;
+      z-index: 9999;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      border: 1px solid rgba(255,255,255,0.04);
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
   </style>
 </head>
 <body>
@@ -101,12 +116,13 @@
       <div id="date">JS did not run</div>
 
       <div id="photo-container" aria-hidden="false">
-        <img id="local-photo" alt="Local photo (test)" src="" />
+        <img id="local-photo" alt="Random Pexels photo" src="" />
       </div>
     </div>
   </div>
 
   <div id="diag">Starting...</div>
+  <div id="version-badge">v10</div>
 
   <script>
     window.onload = function() {
@@ -130,9 +146,7 @@
           dateEl.innerText = dateString;
         }
       }
-
-      updateTime();
-      setInterval(updateTime, 1000);
+      updateTime(); setInterval(updateTime, 1000);
 
       // Keep the gradient visible as fallback
       var gradients = [
@@ -146,14 +160,31 @@
       bgEl.style.backgroundSize = 'cover';
       bgEl.style.backgroundPosition = 'center';
 
-      // Pexels small-variant loading logic
-      var originalPexels = "https://images.pexels.com/photos/414612/pexels-photo-414612.jpeg";
+      /* ---------------------------
+         Random Pexels selection logic
+         - Uses a client-side list of Pexels photo IDs (no API key)
+         - Builds a compressed/width variant (cap 640)
+         - Tries small -> medium -> original -> local fallback
+      ---------------------------- */
 
+      // Curated Pexels photo IDs (add more IDs to increase variety)
+      var pexelsIds = [
+        414612, 2014422, 326055, 158607, 34950,
+        3156381, 1420706, 247932, 355423, 1108099
+      ];
+
+      // Build a predictable Pexels URL from an ID (works for many Pexels image paths)
+      function pexelsUrlForId(id) {
+        // pattern: /photos/{id}/pexels-photo-{id}.jpeg
+        // This mirrors the filename pattern used by many Pexels assets
+        return "https://images.pexels.com/photos/" + id + "/pexels-photo-" + id + ".jpeg";
+      }
+
+      // getTargetWidth capped (default 640)
       function getTargetWidth(maxCap) {
-        maxCap = maxCap || 800;
+        maxCap = maxCap || 640;
         var w = Math.min(maxCap, Math.round(window.innerWidth || maxCap));
-        var dpr = (window.devicePixelRatio && window.devicePixelRatio <= 2) ? Math.round(window.devicePixelRatio) : 1;
-        return Math.max(320, Math.round(w * dpr));
+        return Math.max(320, w);
       }
 
       function buildPexelsVariant(url, width, height, quality) {
@@ -171,18 +202,27 @@
           var t = new Image();
           t.onload = function() { onSuccess(u); };
           t.onerror = function() { next(); };
+          // start loading
           t.src = u;
         }
         next();
       }
 
-      var photoEl = document.getElementById('local-photo');
+      // Pick a random ID from the list
+      function pickRandomId() {
+        var idx = Math.floor(Math.random() * pexelsIds.length);
+        return pexelsIds[idx];
+      }
+
+      var chosenId = pickRandomId();
+      var base = pexelsUrlForId(chosenId);
+      var targetW = getTargetWidth(640);
+      var small = buildPexelsVariant(base, targetW, null, 80);
+      var medium = buildPexelsVariant(base, Math.min(1024, Math.round(targetW * 1.25)), null, 84);
+      var original = base;
       var localFallback = "https://gregabel3000.github.io/gregipad/images/bg1.svg";
-      var targetW = getTargetWidth(800);
-      var targetH = Math.round(targetW * 3 / 4);
-      var small = buildPexelsVariant(originalPexels, targetW, targetH, 80);
-      var medium = buildPexelsVariant(originalPexels, Math.min(1024, Math.round(targetW * 1.5)), null, 84);
-      var original = originalPexels;
+
+      var photoEl = document.getElementById('local-photo');
 
       tryImageSequence([small, medium, original, localFallback],
         function(workingUrl) {
