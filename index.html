@@ -1,6 +1,8 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
 <head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <title>iPad Dashboard (Legacy Edition v6)</title>
   <style>
     html, body {
@@ -11,18 +13,19 @@
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
       color: white;
       position: relative;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
       background-color: black;
       overflow: hidden;
     }
 
+    /* Full-screen element that will hold gradient + photo layers */
     #gradient-bg {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
       z-index: 0;
       background: black;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
       transition: background 1s ease-in-out;
     }
 
@@ -101,32 +104,48 @@
         }
       }
 
-      setInterval(updateTime, 1000);
       updateTime();
+      setInterval(updateTime, 1000);
 
-      // --- Hybrid background setup ---
+      // --- Hybrid background setup (gradient + remote image on the same element) ---
       var gradients = [
-        "linear-gradient(to right, #1e3c72, #2a5298)",
-        "linear-gradient(to right, #654ea3, #eaafc8)",
-        "linear-gradient(to right, #00b09b, #96c93d)",
-        "linear-gradient(to right, #2193b0, #6dd5ed)",
-        "linear-gradient(to right, #ee9ca7, #ffdde1)"
+        "linear-gradient(to right, rgba(30,60,114,0.6), rgba(42,82,152,0.35))",
+        "linear-gradient(to right, rgba(101,78,163,0.6), rgba(234,175,200,0.35))",
+        "linear-gradient(to right, rgba(0,176,155,0.6), rgba(150,201,61,0.35))",
+        "linear-gradient(to right, rgba(33,147,176,0.6), rgba(109,213,237,0.35))",
+        "linear-gradient(to right, rgba(238,156,167,0.6), rgba(255,221,225,0.35))"
       ];
 
+      var chosenGradient = gradients[Math.floor(Math.random() * gradients.length)];
       var bgEl = document.getElementById('gradient-bg');
-      bgEl.style.background = gradients[Math.floor(Math.random() * gradients.length)];
 
-      // Try to load a random Unsplash image
+      // Use gradient right away so there's always something visible
+      bgEl.style.background = chosenGradient;
+      bgEl.style.backgroundSize = 'cover';
+      bgEl.style.backgroundPosition = 'center';
+
+      // Try to load a random image and layer it with the gradient on the same element.
+      // Using a cache-buster helps avoid stale cached images on old devices.
+      var photoUrl = "https://picsum.photos/1600/900?random=" + Date.now();
+
       var img = new Image();
+      // optional: help with CORS for canvas operations (not used here), but may help some servers
+      img.crossOrigin = "anonymous";
       img.onload = function() {
-        document.body.style.backgroundImage = "url('" + img.src + "')";
+        // Put the gradient above the image so it still tints the photo.
+        // Format: <gradient>, url("...")  (gradient is the first layer, image second)
+        bgEl.style.backgroundImage = chosenGradient + ', url("' + photoUrl + '")';
+        // sizing and position (applies to both layers)
+        bgEl.style.backgroundSize = 'cover';
+        bgEl.style.backgroundPosition = 'center';
       };
       img.onerror = function() {
         console.log("Image failed to load; using gradient only.");
+        // keep the gradient-only background already set above
       };
-      img.src = "https://picsum.photos/1600/900?random";
+      img.src = photoUrl;
 
-      // Auto reload every 6 hours
+      // Auto reload every 6 hours (refresh image/fixes stuck displays)
       setTimeout(function() {
         location.reload();
       }, 6 * 60 * 60 * 1000);
