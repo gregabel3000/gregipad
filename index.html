@@ -17,7 +17,6 @@
       overflow: hidden;
     }
 
-    /* Full-screen element that will hold gradient + photo layers */
     #gradient-bg {
       position: absolute;
       top: 0; left: 0; right: 0; bottom: 0;
@@ -69,6 +68,26 @@
       margin-top: 10px;
       text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
     }
+
+    /* Photo container styles */
+    #photo-container {
+      margin-top: 18px;
+      margin-bottom: 6px;
+    }
+
+    #local-photo {
+      max-width: 480px;
+      max-height: 360px;
+      width: auto;
+      height: auto;
+      display: block;
+      border-radius: 8px;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.6);
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+
+    /* diagnostic box */
+    #diag { position: fixed; top: 12px; left: 12px; z-index: 9999; background: rgba(0,0,0,0.6); color: #fff; padding: 6px 10px; border-radius:6px; font-size:13px; }
   </style>
 </head>
 <body>
@@ -80,11 +99,19 @@
         <span id="time-main">--:--:-- AM</span>
       </div>
       <div id="date">JS did not run</div>
+
+      <div id="photo-container" aria-hidden="false">
+        <img id="local-photo" alt="Local photo (test)" src="" />
+      </div>
     </div>
   </div>
 
+  <div id="diag">Starting...</div>
+
   <script>
     window.onload = function() {
+      function setDiag(msg) { var d = document.getElementById('diag'); if(d) d.innerText = msg; console.log(msg); }
+
       // Update clock
       function updateTime() {
         var now = new Date();
@@ -107,48 +134,70 @@
       updateTime();
       setInterval(updateTime, 1000);
 
-      // --- Hybrid background setup (gradient + remote image on the same element) ---
+      // Keep the gradient visible as fallback
       var gradients = [
         "linear-gradient(to right, rgba(30,60,114,0.6), rgba(42,82,152,0.35))",
         "linear-gradient(to right, rgba(101,78,163,0.6), rgba(234,175,200,0.35))",
-        "linear-gradient(to right, rgba(0,176,155,0.6), rgba(150,201,61,0.35))",
-        "linear-gradient(to right, rgba(33,147,176,0.6), rgba(109,213,237,0.35))",
-        "linear-gradient(to right, rgba(238,156,167,0.6), rgba(255,221,225,0.35))"
+        "linear-gradient(to right, rgba(0,176,155,0.6), rgba(150,201,61,0.35))"
       ];
-
       var chosenGradient = gradients[Math.floor(Math.random() * gradients.length)];
       var bgEl = document.getElementById('gradient-bg');
-
-      // Use gradient right away so there's always something visible
       bgEl.style.background = chosenGradient;
       bgEl.style.backgroundSize = 'cover';
       bgEl.style.backgroundPosition = 'center';
 
-      // Try to load a random image and layer it with the gradient on the same element.
-      // Using a cache-buster helps avoid stale cached images on old devices.
-      var photoUrl = "https://picsum.photos/1600/900?random=" + Date.now();
+      // Pexels small-variant loading logic
+      var originalPexels = "https://images.pexels.com/photos/414612/pexels-photo-414612.jpeg";
 
-      var img = new Image();
-      // optional: help with CORS for canvas operations (not used here), but may help some servers
-      img.crossOrigin = "anonymous";
-      img.onload = function() {
-        // Put the gradient above the image so it still tints the photo.
-        // Format: <gradient>, url("...")  (gradient is the first layer, image second)
-        bgEl.style.backgroundImage = chosenGradient + ', url("' + photoUrl + '")';
-        // sizing and position (applies to both layers)
-        bgEl.style.backgroundSize = 'cover';
-        bgEl.style.backgroundPosition = 'center';
-      };
-      img.onerror = function() {
-        console.log("Image failed to load; using gradient only.");
-        // keep the gradient-only background already set above
-      };
-      img.src = photoUrl;
+      function getTargetWidth(maxCap) {
+        maxCap = maxCap || 800;
+        var w = Math.min(maxCap, Math.round(window.innerWidth || 800));
+        var dpr = (window.devicePixelRatio && window.devicePixelRatio <= 2) ? Math.round(window.devicePixelRatio) : 1;
+        return Math.max(320, Math.round(w * dpr));
+      }
 
-      // Auto reload every 6 hours (refresh image/fixes stuck displays)
-      setTimeout(function() {
-        location.reload();
-      }, 6 * 60 * 60 * 1000);
+      function buildPexelsVariant(url, width, height, quality) {
+        var q = quality || 80;
+        var hParam = height ? "&h=" + height : "";
+        return url + "?auto=compress&cs=tinysrgb&dpr=1&w=" + width + hParam + "&q=" + q;
+      }
+
+      function tryImageSequence(urls, onSuccess, onFail) {
+        var i = 0;
+        function next() {
+          if (i >= urls.length) { onFail(); return; }
+          var u = urls[i++];
+          setDiag('Trying: ' + u);
+          var t = new Image();
+          t.onload = function() { onSuccess(u); };
+          t.onerror = function() { next(); };
+          t.src = u;
+        }
+        next();
+      }
+
+      var photoEl = document.getElementById('local-photo');
+      var localFallback = "https://gregabel3000.github.io/gregipad/images/bg1.svg";
+      var targetW = getTargetWidth(800);
+      var targetH = Math.round(targetW * 3 / 4);
+      var small = buildPexelsVariant(originalPexels, targetW, targetH, 80);
+      var medium = buildPexelsVariant(originalPexels, Math.min(1024, Math.round(targetW * 1.5)), null, 84);
+      var original = originalPexels;
+
+      tryImageSequence([small, medium, original, localFallback],
+        function(workingUrl) {
+          setDiag('Loaded: ' + workingUrl);
+          photoEl.src = workingUrl;
+          var cont = document.getElementById('photo-container'); if (cont) cont.style.display = '';
+        },
+        function() {
+          setDiag('All variants failed to load.');
+          var cont = document.getElementById('photo-container'); if (cont) cont.style.display = 'none';
+        }
+      );
+
+      // Auto reload every 6 hours
+      setTimeout(function() { location.reload(); }, 6 * 60 * 60 * 1000);
     };
   </script>
 </body>
