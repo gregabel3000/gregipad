@@ -1,281 +1,154 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>iPad Dashboard (Legacy Edition v11 - Debug)</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Greg’s Clock</title>
   <style>
     html, body {
       margin: 0;
-      padding: 0;
       height: 100%;
-      width: 100%;
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-      color: white;
-      position: relative;
-      background-color: black;
       overflow: hidden;
+      font-family: "SF Pro Display", -apple-system, BlinkMacSystemFont, sans-serif;
+      color: white;
     }
 
     #gradient-bg {
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: linear-gradient(to bottom right, #2b5876, #4e4376);
       z-index: 0;
-      background: black;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      transition: background-image 1s ease-in-out, background 1s ease-in-out;
     }
 
     #overlay {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
       background-color: rgba(0, 0, 0, 0.4);
-      position: absolute;
-      top: 0; left: 0; right: 0; bottom: 0;
       z-index: 1;
     }
 
-    #content {
-      position: relative;
+    #clock {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
       z-index: 2;
-      height: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-end;
-      padding: 40px;
-      box-sizing: border-box;
     }
 
-    #left {
-      text-align: left;
-      width: 100%;
+    #time {
+      font-size: 14vw;
+      letter-spacing: -0.02em;
     }
 
-    #time-wrapper {
-      font-weight: 600;
-      line-height: 1.1;
-      white-space: nowrap;
-      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
-      font-size: 120px;
-    }
-
-    #time-main {
-      font-size: inherit;
+    #seconds {
+      font-size: 5vw;
+      vertical-align: super;
     }
 
     #date {
-      font-size: 40px;
-      margin-top: 10px;
-      text-shadow: 0 1px 8px rgba(0, 0, 0, 0.7);
+      font-size: 3vw;
+      margin-top: 1vw;
     }
 
-    /* diagnostic box */
-    #diag { 
-      position: fixed; 
-      top: 12px; 
-      left: 12px; 
-      z-index: 9999; 
-      background: rgba(0,0,0,0.6); 
-      color: #fff; 
-      padding: 6px 10px; 
-      border-radius:6px; 
-      font-size:13px; 
-      max-width: calc(100% - 150px);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-
-    /* version badge */
-    #version-badge {
+    #diag {
       position: fixed;
-      top: 12px;
-      right: 12px;
-      z-index: 9999;
-      background: rgba(255,255,255,0.08);
-      color: #fff;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      border: 1px solid rgba(255,255,255,0.04);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+      bottom: 10px; left: 10px;
+      font-size: 0.9vw;
+      color: rgba(255, 255, 255, 0.7);
+      z-index: 3;
     }
   </style>
 </head>
 <body>
   <div id="gradient-bg"></div>
   <div id="overlay"></div>
-  <div id="content">
-    <div id="left">
-      <div id="time-wrapper">
-        <span id="time-main">--:--:-- AM</span>
-      </div>
-      <div id="date">JS did not run</div>
-    </div>
+
+  <div id="clock">
+    <div id="time">--:--<span id="seconds">--</span></div>
+    <div id="date">Loading...</div>
   </div>
 
   <div id="diag">Starting...</div>
-  <div id="version-badge">v11-debug</div>
 
   <script>
-    (function () {
-      // Safe guard to show any exception in the diag box + console
-      function setDiag(msg) {
-        try {
-          var d = document.getElementById('diag');
-          if (d) d.innerText = msg;
-        } catch (e) { /* ignore */ }
-        try { console.log(msg); } catch (e) { }
-      }
+    const timeEl = document.getElementById("time");
+    const secEl = document.getElementById("seconds");
+    const dateEl = document.getElementById("date");
+    const diagEl = document.getElementById("diag");
+    const bgEl = document.getElementById("gradient-bg");
 
-      // Global error handler to make sure we see what's failing
-      window.addEventListener('error', function (ev) {
-        var msg = 'ERROR: ' + (ev && ev.message ? ev.message : JSON.stringify(ev));
-        setDiag(msg);
-        console.error(ev.error || ev);
-      });
+    function setDiag(text) {
+      diagEl.textContent = text;
+    }
 
-      window.addEventListener('unhandledrejection', function (ev) {
-        var reason = ev && ev.reason ? ev.reason : 'unhandled rejection';
-        setDiag('Promise Rejection: ' + (reason && reason.message ? reason.message : String(reason)));
-        console.error(ev);
-      });
+    function updateClock() {
+      const now = new Date();
+      const hours = now.getHours().toString().padStart(2, "0");
+      const minutes = now.getMinutes().toString().padStart(2, "0");
+      const seconds = now.getSeconds().toString().padStart(2, "0");
+      timeEl.firstChild.nodeValue = `${hours}:${minutes}`;
+      secEl.textContent = seconds;
 
-      // Wrap main logic in try/catch so clock still runs even if other code breaks
-      try {
-        // --------- Clock ---------
-        function updateTime() {
-          try {
-            var now = new Date();
-            var hours = now.getHours() % 12 || 12;
-            var minutes = ("0" + now.getMinutes()).slice(-2);
-            var seconds = ("0" + now.getSeconds()).slice(-2);
-            var ampm = now.getHours() >= 12 ? 'PM' : 'AM';
-            var timeString = hours + ':' + minutes + ':' + seconds + ' ' + ampm;
-            var dateString = now.toDateString();
+      const options = { weekday: "long", month: "long", day: "numeric" };
+      dateEl.textContent = now.toLocaleDateString(undefined, options);
+    }
 
-            var timeMainEl = document.getElementById('time-main');
-            var dateEl = document.getElementById('date');
+    setInterval(updateClock, 1000);
+    updateClock();
 
-            if (timeMainEl) timeMainEl.innerText = timeString;
-            if (dateEl) dateEl.innerText = dateString;
-          } catch (err) {
-            setDiag('Clock error: ' + (err && err.message ? err.message : String(err)));
-            console.error(err);
-          }
+    function tryImageSequence(urls, success, failure) {
+      let index = 0;
+      function tryNext() {
+        if (index >= urls.length) {
+          failure();
+          return;
         }
-        updateTime();
-        setInterval(updateTime, 1000);
-
-        // --------- Background / Image loader (non-blocking) ---------
-        var bgEl = document.getElementById('gradient-bg');
-
-        // Use a random gradient as immediate fallback
-        var gradients = [
-          "linear-gradient(to right, rgba(30,60,114,0.6), rgba(42,82,152,0.35))",
-          "linear-gradient(to right, rgba(101,78,163,0.6), rgba(234,175,200,0.35))",
-          "linear-gradient(to right, rgba(0,176,155,0.6), rgba(150,201,61,0.35))"
-        ];
-        var chosenGradient = gradients[Math.floor(Math.random() * gradients.length)];
-        try {
-          if (bgEl) {
-            bgEl.style.background = chosenGradient;
-            bgEl.style.backgroundSize = 'cover';
-            bgEl.style.backgroundPosition = 'center';
-          }
-        } catch (e) { /* non-fatal */ }
-
-        // Image loading logic isolated and wrapped
-        (function loadBackgroundImage() {
-          try {
-            var pexelsIds = [
-              414612, 2014422, 326055, 158607, 34950,
-              3156381, 1420706, 247932, 355423, 1108099
-            ];
-
-            function pexelsUrlForId(id) {
-              return "https://images.pexels.com/photos/" + id + "/pexels-photo-" + id + ".jpeg";
-            }
-
-            function getTargetWidth(maxCap) {
-              maxCap = maxCap || 1280;
-              var w = Math.min(maxCap, Math.round(window.innerWidth || maxCap));
-              return Math.max(640, w);
-            }
-
-            function buildPexelsVariant(url, width, height, quality) {
-              var q = quality || 80;
-              var hParam = height ? "&h=" + height : "";
-              return url + "?auto=compress&cs=tinysrgb&dpr=1&w=" + width + hParam + "&q=" + q;
-            }
-
-            function tryImageSequence(urls, onSuccess, onFail) {
-              var i = 0;
-              function next() {
-                if (i >= urls.length) { onFail(); return; }
-                var u = urls[i++];
-                setDiag('Trying image: ' + (u.length > 80 ? u.slice(0, 80) + '...' : u));
-                var t = new Image();
-                t.onload = function () { onSuccess(u); };
-                t.onerror = function () { next(); };
-                // start loading
-                t.src = u;
-              }
-              // Kick it off asynchronously
-              setTimeout(next, 10);
-            }
-
-            function pickRandomId() {
-              return pexelsIds[Math.floor(Math.random() * pexelsIds.length)];
-            }
-
-            var chosenId = pickRandomId();
-            var base = pexelsUrlForId(chosenId);
-            var targetW = getTargetWidth(1280);
-            var small = buildPexelsVariant(base, targetW, null, 80);
-            var medium = buildPexelsVariant(base, Math.min(1920, Math.round(targetW * 1.25)), null, 84);
-            var original = base;
-            var localFallback = "https://gregabel3000.github.io/gregipad/images/bg1.svg";
-
-            tryImageSequence([small, medium, original, localFallback],
-              function (workingUrl) {
-                try {
-                  setDiag('Loaded background');
-                  if (bgEl) {
-                    // Slight delay so transition shows
-                    bgEl.style.backgroundImage = "url('" + workingUrl + "')";
-                    bgEl.style.backgroundSize = "cover";
-                    bgEl.style.backgroundPosition = "center";
-                    bgEl.style.backgroundRepeat = "no-repeat";
-                  }
-                } catch (err) {
-                  setDiag('Background set error: ' + (err && err.message ? err.message : String(err)));
-                  console.error(err);
-                }
-              },
-              function () {
-                setDiag('All image variants failed; using gradient');
-                // nothing else to do, gradient remains
-              }
-            );
-          } catch (err) {
-            setDiag('Image loader error: ' + (err && err.message ? err.message : String(err)));
-            console.error(err);
-          }
-        })();
-
-        // Auto reload every 6 hours (non-blocking)
-        try {
-          setTimeout(function () { try { location.reload(); } catch (e) { console.error(e); } }, 6 * 60 * 60 * 1000);
-        } catch (e) { /* ignore */ }
-
-        // All set
-        setDiag('Running');
-      } catch (err) {
-        setDiag('Init error: ' + (err && err.message ? err.message : String(err)));
-        console.error(err);
+        const img = new Image();
+        img.onload = () => success(urls[index]);
+        img.onerror = () => {
+          index++;
+          tryNext();
+        };
+        img.src = urls[index];
       }
-    })();
+      tryNext();
+    }
+
+    function loadBackground() {
+      setDiag("Loading image...");
+
+      // Grab a random image from Pexels (randomized query each time)
+      const query = ["forest", "mountains", "city lights", "night sky", "sunrise", "ocean", "winter", "foggy landscape"];
+      const randomQuery = query[Math.floor(Math.random() * query.length)];
+      const base = "https://images.pexels.com/photos/";
+      const photos = [
+        "1103970", "414171", "158827", "355465", "771883", "1323550", "3408744", "2387418"
+      ];
+      const randomId = photos[Math.floor(Math.random() * photos.length)];
+      const small = `${base}${randomId}/pexels-photo-${randomId}.jpeg?auto=compress&cs=tinysrgb&w=640`;
+      const medium = `${base}${randomId}/pexels-photo-${randomId}.jpeg?auto=compress&cs=tinysrgb&w=1280`;
+      const original = `${base}${randomId}/pexels-photo-${randomId}.jpeg?auto=compress&cs=tinysrgb`;
+
+      tryImageSequence([small, medium, original],
+        function(workingUrl) {
+          setDiag("Loaded: " + workingUrl);
+          bgEl.style.backgroundImage = `url('${workingUrl}')`;
+          bgEl.style.backgroundSize = "cover";
+          bgEl.style.backgroundPosition = "center";
+          bgEl.style.backgroundRepeat = "no-repeat";
+        },
+        function() {
+          setDiag("All variants failed to load.");
+        }
+      );
+    }
+
+    loadBackground();
+
+    // Refresh background every 6 hours
+    setInterval(loadBackground, 6 * 60 * 60 * 1000);
   </script>
 </body>
 </html>
