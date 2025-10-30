@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clock + Weather Forecast</title>
+<title>Clock + Weather Forecast v1.0</title>
 <style>
   html, body {
     margin: 0;
@@ -16,6 +16,7 @@
     color: white;
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
     text-align: center;
+    position: relative;
   }
 
   #container {
@@ -55,6 +56,27 @@
   .forecast-item {
     margin: 0.5vw 0;
   }
+
+  /* Version badge in top-right corner */
+  #version-badge {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    border: 1px solid rgba(255,255,255,0.2);
+    z-index: 9999;
+  }
+
+  #raw-url {
+    font-size: 1.5vw;
+    margin-top: 1vw;
+    color: #aaa;
+    word-break: break-all;
+  }
 </style>
 </head>
 <body>
@@ -63,7 +85,10 @@
   <div id="date">Loading date...</div>
   <div id="weather">Loading weather...</div>
   <div id="forecast">Loading forecast...</div>
+  <div id="raw-url"></div>
 </div>
+
+<div id="version-badge">v1.0</div>
 
 <script>
   const timeEl = document.getElementById("time");
@@ -71,6 +96,14 @@
   const dateEl = document.getElementById("date");
   const weatherEl = document.getElementById("weather");
   const forecastEl = document.getElementById("forecast");
+  const rawUrlEl = document.getElementById("raw-url");
+
+  const ZIP_CODE = "01301";
+  const VERSION = "v1.0";
+  const API_URL = `https://wttr.in/${ZIP_CODE}?format=j1&u=f`;
+
+  // Display raw API URL for easy comparison
+  rawUrlEl.textContent = `Fetching from: ${API_URL}`;
 
   // CLOCK
   function updateClock() {
@@ -90,9 +123,9 @@
   updateClock();
 
   // WEATHER + FORECAST
-  async function getWeather(zip = "01301") {
+  async function getWeather(zip = ZIP_CODE) {
     try {
-      const res = await fetch(`https://wttr.in/${zip}?format=j1&u=f`);
+      const res = await fetch(API_URL);
       if (!res.ok) throw new Error("Failed to fetch weather");
       const data = await res.json();
 
