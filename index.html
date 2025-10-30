@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard v2.5</title>
+<title>Dashboard v2.6</title>
 <style>
   body {
     margin: 0;
@@ -33,6 +33,12 @@
     margin-top: 20px;
   }
 
+  #weather-text {
+    font-size: 20px;
+    margin-top: 10px;
+    color: #ccc;
+  }
+
   #version-badge {
     position: fixed;
     top: 12px;
@@ -53,9 +59,10 @@
   <div id="time">--:--</div>
   <div id="date">Loading date...</div>
   <div id="weather">Loading weather...</div>
+  <div id="weather-text">Loading weather text...</div>
 </div>
 
-<div id="version-badge">v2.5</div>
+<div id="version-badge">v2.6</div>
 
 <script>
 // ----- CLOCK -----
@@ -81,29 +88,26 @@ updateClock();
 
 // ----- WEATHER -----
 var weatherEl = document.getElementById('weather');
+var weatherTextEl = document.getElementById('weather-text');
+
 var url = "https://wttr.in/Greenfield,MA?format=2&u";
 
+// emoji mapping
 var emojiMap = {
   "🌫": "Foggy",
   "☀️": "Sunny",
+  "☁️": "Cloudy",
   "🌧️": "Rainy",
   "🌨️": "Snowy",
   "🌬️": "Wind",
-  "🌡️": "Temp"
+  "🌡️": ""
 };
 
+// wind direction mapping
 var windDirMap = {
-  "↖": "NW",
-  "↑": "N",
-  "↗": "NE",
-  "→": "E",
-  "↘": "SE",
-  "↓": "S",
-  "↙": "SW",
-  "←": "W"
+  "↖": "NW", "↑": "N", "↗": "NE", "→": "E",
+  "↘": "SE", "↓": "S", "↙": "SW", "←": "W"
 };
-
-var plainTextWeather = ""; // will hold parsed version
 
 var xhr = new XMLHttpRequest();
 xhr.open('GET', url, true);
@@ -113,16 +117,26 @@ xhr.onreadystatechange = function() {
       var emojiString = xhr.responseText;
       weatherEl.innerText = emojiString; // display emojis
 
-      // ---- convert to plain text ----
-      plainTextWeather = emojiString
-        .replace(/🌫|☀️|🌧️|🌨️|🌬️|🌡️/g, function(match){ return emojiMap[match]; })
+      // ---- convert to clean plain text ----
+      var plainText = emojiString
+        .replace(/🌫|☀️|☁️|🌧️|🌨️|🌬️|🌡️/g, function(match){ return emojiMap[match]; })
         .replace(/[↖↑↗→↘↓↙←]/g, function(match){ return windDirMap[match]; })
-        .replace(/\+/g,''); // optional cleanup
+        .replace(/\+/g,'') // remove plus signs
+        .replace(/Temp/,'') // remove "Temp" placeholder
+        .trim();
 
-      console.log("Plain text weather:", plainTextWeather); // behind the scenes
+      // add commas and spacing
+      // split on spaces, insert commas before wind
+      var parts = plainText.split(/\s+/);
+      var weatherDescription = parts.slice(0, parts.length-2).join(' ');
+      var temperature = parts[parts.length-2] || '';
+      var wind = parts[parts.length-1] || '';
+      weatherTextEl.innerText = weatherDescription + ', ' + temperature + ', ' + wind;
+
+      console.log("Plain text weather:", weatherTextEl.innerText); // for debugging
     } else {
       weatherEl.innerText = "Weather unavailable";
-      plainTextWeather = "Weather unavailable";
+      weatherTextEl.innerText = "Weather unavailable";
     }
   }
 };
