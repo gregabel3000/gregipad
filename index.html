@@ -3,17 +3,22 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iPad Dashboard v4.1</title>
+<title>iPad Dashboard v4.2</title>
 <style>
   html, body {
     margin: 0; padding: 0; height: 100%; width: 100%;
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-    background: black; color: white; display: flex; justify-content: center; align-items: center;
-    flex-direction: column;
+    background: black; color: white; display: flex; flex-direction: column;
+    justify-content: space-between;
+  }
+  #top-left {
+    padding: 20px;
   }
   #time { font-size: 100px; font-weight: bold; }
   #date { font-size: 40px; margin-top: 10px; }
-  #weather { font-size: 60px; margin-top: 20px; }
+  #weather-container {
+    display: flex; justify-content: center; margin-bottom: 20px;
+  }
   #version-badge {
     position: fixed; top: 12px; right: 12px;
     background: rgba(255,255,255,0.08); color:white;
@@ -22,10 +27,16 @@
 </style>
 </head>
 <body>
-  <div id="time">--:--:--</div>
-  <div id="date">Loading...</div>
-  <div id="weather">Loading weather...</div>
-  <div id="version-badge">v4.1</div>
+  <div id="top-left">
+    <div id="time">--:--:--</div>
+    <div id="date">Loading...</div>
+  </div>
+
+  <div id="weather-container">
+    <img id="weather" src="https://wttr.in/Greenfield,MA.png?1&u" alt="Current weather">
+  </div>
+
+  <div id="version-badge">v4.2</div>
 
 <script>
 function updateClock() {
@@ -39,23 +50,6 @@ function updateClock() {
 }
 setInterval(updateClock, 1000);
 updateClock();
-
-// WTTR.in: Greenfield, MA, Fahrenheit
-const wttrURL = 'https://wttr.in/Greenfield,MA?format=3&u';
-
-fetch(wttrURL)
-  .then(response => response.text())
-  .then(text => {
-    // take only the first line
-    const firstLine = text.split('\n')[0];
-    // remove "Greenfield,MA: " prefix
-    const displayText = firstLine.replace(/^Greenfield,MA:\s*/, '');
-    document.getElementById('weather').innerText = displayText;
-  })
-  .catch(err => {
-    console.error(err);
-    document.getElementById('weather').innerText = 'Weather fetch failed';
-  });
 </script>
 </body>
 </html>
