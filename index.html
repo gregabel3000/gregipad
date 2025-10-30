@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard v2.7</title>
+<title>Dashboard v2.8</title>
 <style>
   body {
     margin: 0;
@@ -29,7 +29,9 @@
   }
 
   #weather {
-    margin-top: 20px;
+    font-size: 80px; /* huge emojis */
+    margin-top: 30px;
+    line-height: 1;
   }
 
   #version-badge {
@@ -44,11 +46,6 @@
     border: 1px solid rgba(255,255,255,0.2);
     z-index: 9999;
   }
-
-  img.weather-img {
-    max-width: 320px;
-    width: 90%;
-  }
 </style>
 </head>
 <body>
@@ -56,12 +53,10 @@
 <div id="container">
   <div id="time">--:--</div>
   <div id="date">Loading date...</div>
-  <div id="weather">
-    <img class="weather-img" src="https://wttr.in/Greenfield,MA?format=2&u" alt="Weather">
-  </div>
+  <div id="weather">Loading weather...</div>
 </div>
 
-<div id="version-badge">v2.7</div>
+<div id="version-badge">v2.8</div>
 
 <script>
 // ----- CLOCK -----
@@ -84,6 +79,20 @@ function updateClock() {
 }
 setInterval(updateClock, 1000);
 updateClock();
+
+// ----- WEATHER (emoji only) -----
+var weatherEl = document.getElementById('weather');
+
+var xhr = new XMLHttpRequest();
+xhr.open("GET", "https://wttr.in/Greenfield,MA?format=3&u", true); 
+xhr.onload = function() {
+  if(xhr.status === 200){
+    weatherEl.innerText = xhr.responseText; // emojis only
+  } else {
+    weatherEl.innerText = "Weather unavailable";
+  }
+};
+xhr.send();
 </script>
 
 </body>
