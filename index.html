@@ -71,17 +71,18 @@
   updateClock();
 
   // Weather function using wttr.in
-  async function getWeather(location = "auto") {
+  async function getWeather(zip = "01301") {
     try {
-      const res = await fetch(`https://wttr.in/${location}?format=j1`);
+      // &u=f specifies US customary units (Fahrenheit)
+      const res = await fetch(`https://wttr.in/${zip}?format=j1&u=f`);
       if (!res.ok) throw new Error("Failed to fetch weather");
       const data = await res.json();
 
       const current = data.current_condition[0];
-      const tempC = current.temp_C;
+      const tempF = current.temp_F; // Fahrenheit
       const condition = current.weatherDesc[0].value;
 
-      weatherEl.textContent = `Current: ${tempC}°C, ${condition}`;
+      weatherEl.textContent = `Current: ${tempF}°F, ${condition}`;
       console.log("Full wttr data:", data);
     } catch (err) {
       console.error(err);
@@ -89,7 +90,7 @@
     }
   }
 
-  getWeather(); // auto-detect location
+  getWeather(); // fixed zip code
 </script>
 </body>
 </html>
