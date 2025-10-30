@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard v2.4</title>
+<title>Dashboard v2.5</title>
 <style>
   body {
     margin: 0;
@@ -55,7 +55,7 @@
   <div id="weather">Loading weather...</div>
 </div>
 
-<div id="version-badge">v2.4</div>
+<div id="version-badge">v2.5</div>
 
 <script>
 // ----- CLOCK -----
@@ -81,17 +81,48 @@ updateClock();
 
 // ----- WEATHER -----
 var weatherEl = document.getElementById('weather');
-// Plain city,state string — no tilde
 var url = "https://wttr.in/Greenfield,MA?format=2&u";
+
+var emojiMap = {
+  "🌫": "Foggy",
+  "☀️": "Sunny",
+  "🌧️": "Rainy",
+  "🌨️": "Snowy",
+  "🌬️": "Wind",
+  "🌡️": "Temp"
+};
+
+var windDirMap = {
+  "↖": "NW",
+  "↑": "N",
+  "↗": "NE",
+  "→": "E",
+  "↘": "SE",
+  "↓": "S",
+  "↙": "SW",
+  "←": "W"
+};
+
+var plainTextWeather = ""; // will hold parsed version
 
 var xhr = new XMLHttpRequest();
 xhr.open('GET', url, true);
 xhr.onreadystatechange = function() {
   if(xhr.readyState === 4){
     if(xhr.status === 200){
-      weatherEl.innerText = xhr.responseText;
+      var emojiString = xhr.responseText;
+      weatherEl.innerText = emojiString; // display emojis
+
+      // ---- convert to plain text ----
+      plainTextWeather = emojiString
+        .replace(/🌫|☀️|🌧️|🌨️|🌬️|🌡️/g, function(match){ return emojiMap[match]; })
+        .replace(/[↖↑↗→↘↓↙←]/g, function(match){ return windDirMap[match]; })
+        .replace(/\+/g,''); // optional cleanup
+
+      console.log("Plain text weather:", plainTextWeather); // behind the scenes
     } else {
       weatherEl.innerText = "Weather unavailable";
+      plainTextWeather = "Weather unavailable";
     }
   }
 };
