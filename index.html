@@ -1,151 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>iPad Clock + Pexels Background</title>
-  <style>
-    html, body {
-      margin: 0;
-      height: 100%;
-      width: 100%;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-      color: white;
-      background: black;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clock + Weather Test</title>
+<style>
+  html, body {
+    margin: 0;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: black;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    text-align: center;
+  }
 
-    #gradient-bg {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background: linear-gradient(to bottom right, #1e3c72, #2a5298);
-      z-index: 0;
-      transition: background-image 1s ease-in-out;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
+  #time {
+    font-size: 10vw;
+    font-weight: 600;
+    line-height: 1;
+  }
 
-    #overlay {
-      position: fixed;
-      top: 0; left: 0;
-      width: 100%; height: 100%;
-      background-color: rgba(0,0,0,0.4);
-      z-index: 1;
-    }
+  #seconds {
+    font-size: 4vw;
+    vertical-align: super;
+  }
 
-    #clock {
-      position: absolute;
-      top: 50%; left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      z-index: 2;
-    }
+  #date {
+    font-size: 3vw;
+    margin-top: 1vw;
+  }
 
-    #time {
-      font-size: 14vw;
-      font-weight: 600;
-      line-height: 1;
-      letter-spacing: -0.02em;
-      text-shadow: 0 3px 10px rgba(0,0,0,0.8);
-    }
-
-    #seconds {
-      font-size: 5vw;
-      vertical-align: super;
-    }
-
-    #date {
-      font-size: 3vw;
-      margin-top: 1vw;
-      text-shadow: 0 2px 6px rgba(0,0,0,0.7);
-    }
-
-    #diag {
-      position: fixed;
-      bottom: 10px; left: 10px;
-      font-size: 14px;
-      background: rgba(0,0,0,0.5);
-      padding: 6px 10px;
-      border-radius: 6px;
-      color: rgba(255,255,255,0.7);
-      z-index: 3;
-    }
-  </style>
+  #weather {
+    font-size: 3vw;
+    margin-top: 2vw;
+  }
+</style>
 </head>
 <body>
-  <div id="gradient-bg"></div>
-  <div id="overlay"></div>
+<div>
+  <div id="time">--:--<span id="seconds">--</span></div>
+  <div id="date">Loading date...</div>
+  <div id="weather">Loading weather...</div>
+</div>
 
-  <div id="clock">
-    <div id="time">--:--<span id="seconds">--</span></div>
-    <div id="date">Loading...</div>
-  </div>
+<script>
+  const timeEl = document.getElementById("time");
+  const secEl = document.getElementById("seconds");
+  const dateEl = document.getElementById("date");
+  const weatherEl = document.getElementById("weather");
 
-  <div id="diag">Starting...</div>
+  // Clock function
+  function updateClock() {
+    const now = new Date();
+    let hours = now.getHours();
+    const minutes = now.getMinutes().toString().padStart(2, "0");
+    const seconds = now.getSeconds().toString().padStart(2, "0");
+    const ampm = hours >= 12 ? "PM" : "AM";
+    hours = hours % 12 || 12;
 
-  <script>
-    const timeEl = document.getElementById("time");
-    const secEl = document.getElementById("seconds");
-    const dateEl = document.getElementById("date");
-    const diagEl = document.getElementById("diag");
-    const bgEl = document.getElementById("gradient-bg");
+    timeEl.firstChild.nodeValue = `${hours}:${minutes}`;
+    secEl.textContent = seconds;
+    dateEl.textContent = now.toDateString();
+  }
 
-    function setDiag(msg) {
-      diagEl.textContent = msg;
-      console.log(msg);
+  setInterval(updateClock, 1000);
+  updateClock();
+
+  // Weather function using wttr.in
+  async function getWeather(location = "auto") {
+    try {
+      const res = await fetch(`https://wttr.in/${location}?format=j1`);
+      if (!res.ok) throw new Error("Failed to fetch weather");
+      const data = await res.json();
+
+      const current = data.current_condition[0];
+      const tempC = current.temp_C;
+      const condition = current.weatherDesc[0].value;
+
+      weatherEl.textContent = `Current: ${tempC}°C, ${condition}`;
+      console.log("Full wttr data:", data);
+    } catch (err) {
+      console.error(err);
+      weatherEl.textContent = "Weather not available.";
     }
+  }
 
-    function updateClock() {
-      const now = new Date();
-      let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, "0");
-      const seconds = now.getSeconds().toString().padStart(2, "0");
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12;
-      timeEl.firstChild.nodeValue = `${hours}:${minutes}`;
-      secEl.textContent = seconds;
-      dateEl.textContent = now.toDateString();
-    }
-
-    setInterval(updateClock, 1000);
-    updateClock();
-
-    async function loadBackgroundFromPexels(query = "nature") {
-      const API_KEY = "SBaMzKQJGKdIcUgpD8hL4osejkYz3Kzk3VujSKFppC1kKglhtvF72icO"; // <--- replace this with your key
-      const url = `https://api.pexels.com/v1/search?query=${encodeURIComponent(query)}&orientation=landscape&per_page=1&page=${Math.floor(Math.random() * 50) + 1}`;
-
-      setDiag("Loading background...");
-
-      try {
-        const response = await fetch(url, {
-          headers: { Authorization: API_KEY }
-        });
-
-        if (!response.ok) {
-          throw new Error("HTTP error " + response.status);
-        }
-
-        const data = await response.json();
-        if (data.photos && data.photos.length > 0) {
-          const photoUrl = data.photos[0].src.landscape;
-          bgEl.style.backgroundImage = `url('${photoUrl}')`;
-          setDiag("Loaded Pexels background.");
-        } else {
-          setDiag("No photos found; keeping gradient fallback.");
-        }
-      } catch (err) {
-        console.error(err);
-        setDiag("Failed to load Pexels image; keeping gradient.");
-      }
-    }
-
-    // Initial background load
-    loadBackgroundFromPexels("nature");
-
-    // Refresh background every 6 hours
-    setInterval(() => loadBackgroundFromPexels("nature"), 6 * 60 * 60 * 1000);
-  </script>
+  getWeather(); // auto-detect location
+</script>
 </body>
 </html>
