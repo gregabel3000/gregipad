@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clock + Weather Forecast v1.0</title>
+<title>Clock + Weather Forecast v1.1</title>
 <style>
   html, body {
     margin: 0;
@@ -57,7 +57,6 @@
     margin: 0.5vw 0;
   }
 
-  /* Version badge in top-right corner */
   #version-badge {
     position: fixed;
     top: 12px;
@@ -88,87 +87,93 @@
   <div id="raw-url"></div>
 </div>
 
-<div id="version-badge">v1.0</div>
+<div id="version-badge">v1.1</div>
 
 <script>
-  const timeEl = document.getElementById("time");
-  const secEl = document.getElementById("seconds");
-  const dateEl = document.getElementById("date");
-  const weatherEl = document.getElementById("weather");
-  const forecastEl = document.getElementById("forecast");
-  const rawUrlEl = document.getElementById("raw-url");
+const timeEl = document.getElementById("time");
+const secEl = document.getElementById("seconds");
+const dateEl = document.getElementById("date");
+const weatherEl = document.getElementById("weather");
+const forecastEl = document.getElementById("forecast");
+const rawUrlEl = document.getElementById("raw-url");
 
-  const ZIP_CODE = "01301";
-  const VERSION = "v1.0";
-  const API_URL = `https://wttr.in/${ZIP_CODE}?format=j1&u=f`;
+const ZIP_CODE = "01301";
+const API_URL = `https://wttr.in/${ZIP_CODE}?format=j1&u=f`;
 
-  // Display raw API URL for easy comparison
-  rawUrlEl.textContent = `Fetching from: ${API_URL}`;
+// Show API URL for debugging
+rawUrlEl.textContent = `Fetching from: ${API_URL}`;
 
-  // CLOCK
-  function updateClock() {
+// CLOCK
+function updateClock() {
+  const now = new Date();
+  let hours = now.getHours();
+  const minutes = now.getMinutes().toString().padStart(2,"0");
+  const seconds = now.getSeconds().toString().padStart(2,"0");
+  hours = hours % 12 || 12;
+
+  timeEl.firstChild.nodeValue = `${hours}:${minutes}`;
+  secEl.textContent = seconds;
+  dateEl.textContent = now.toDateString();
+}
+
+setInterval(updateClock, 1000);
+updateClock();
+
+// WEATHER
+async function getWeather(zip = ZIP_CODE) {
+  try {
+    const res = await fetch(API_URL);
+    if (!res.ok) throw new Error("Failed to fetch weather");
+    const data = await res.json();
+
     const now = new Date();
-    let hours = now.getHours();
-    const minutes = now.getMinutes().toString().padStart(2, "0");
-    const seconds = now.getSeconds().toString().padStart(2, "0");
-    const ampm = hours >= 12 ? "PM" : "AM";
-    hours = hours % 12 || 12;
+    const currentHour = now.getHours();
 
-    timeEl.firstChild.nodeValue = `${hours}:${minutes}`;
-    secEl.textContent = seconds;
-    dateEl.textContent = now.toDateString();
-  }
+    // CURRENT CONDITIONS
+    const current = data.current_condition[0];
+    const tempF = current.temp_F;
+    const condition = current.weatherDesc[0].value;
+    weatherEl.textContent = `Now: ${tempF}°F, ${condition}`;
 
-  setInterval(updateClock, 1000);
-  updateClock();
+    // TODAY'S HOURLY FORECAST (all remaining blocks from now)
+    const todayHours = data.weather[0].hourly
+      .filter(h => parseInt(h.time, 10)/100 >= currentHour);
 
-  // WEATHER + FORECAST
-  async function getWeather(zip = ZIP_CODE) {
-    try {
-      const res = await fetch(API_URL);
-      if (!res.ok) throw new Error("Failed to fetch weather");
-      const data = await res.json();
+    forecastEl.innerHTML = "<strong>Today’s remaining forecast:</strong><br>";
 
-      // CURRENT CONDITIONS
-      const current = data.current_condition[0];
-      const tempF = current.temp_F;
-      const condition = current.weatherDesc[0].value;
-      weatherEl.textContent = `Now: ${tempF}°F, ${condition}`;
+    todayHours.forEach(h => {
+      const timeLabel = formatTime(h.time);
+      const desc = h.weatherDesc[0].value;
+      const temp = h.tempF;
+      const rain = h.chanceofrain;
+      const item = document.createElement("div");
+      item.classList.add("forecast-item");
+      item.textContent = `${timeLabel}: ${temp}°F, ${desc} (Rain: ${rain}%)`;
+      forecastEl.appendChild(item);
+    });
 
-      // 12-HOUR FORECAST (first 4 x 3-hour chunks)
-      const todayHours = data.weather[0].hourly.slice(0, 4);
-      forecastEl.innerHTML = "<strong>Next 12 hours:</strong><br>";
-
-      todayHours.forEach(hour => {
-        const timeLabel = formatTime(hour.time);
-        const desc = hour.weatherDesc[0].value;
-        const temp = hour.tempF;
-        const rain = hour.chanceofrain;
-        const item = document.createElement("div");
-        item.classList.add("forecast-item");
-        item.textContent = `${timeLabel}: ${temp}°F, ${desc} (Rain: ${rain}%)`;
-        forecastEl.appendChild(item);
-      });
-
-    } catch (err) {
-      console.error(err);
-      weatherEl.textContent = "Weather unavailable.";
-      forecastEl.textContent = "";
+    if(todayHours.length === 0){
+      forecastEl.innerHTML += "No remaining forecast blocks for today.";
     }
-  }
 
-  // Convert wttr time (e.g., "0", "300", "600") into readable format
-  function formatTime(t) {
-    const num = parseInt(t, 10);
-    const hours = Math.floor(num / 100);
-    const date = new Date();
-    date.setHours(hours);
-    date.setMinutes(0);
-    let label = date.toLocaleTimeString([], { hour: 'numeric', hour12: true });
-    return label;
+  } catch(err) {
+    console.error(err);
+    weatherEl.textContent = "Weather unavailable.";
+    forecastEl.textContent = "";
   }
+}
 
-  getWeather();
+// Convert wttr time ("0", "300", "600", …) to readable format
+function formatTime(t){
+  const num = parseInt(t,10);
+  const hours = Math.floor(num/100);
+  const date = new Date();
+  date.setHours(hours);
+  date.setMinutes(0);
+  return date.toLocaleTimeString([], { hour:'numeric', hour12:true });
+}
+
+getWeather();
 </script>
 </body>
 </html>
