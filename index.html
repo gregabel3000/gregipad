@@ -1,55 +1,70 @@
-<!doctype html>
+<!DOCTYPE html>
 <html>
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>iPad Dashboard v4.2</title>
-<style>
-  html, body {
-    margin: 0; padding: 0; height: 100%; width: 100%;
-    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
-    background: black; color: white; display: flex; flex-direction: column;
-    justify-content: space-between;
-  }
-  #top-left {
-    padding: 20px;
-  }
-  #time { font-size: 100px; font-weight: bold; }
-  #date { font-size: 40px; margin-top: 10px; }
-  #weather-container {
-    display: flex; justify-content: center; margin-bottom: 20px;
-  }
-  #version-badge {
-    position: fixed; top: 12px; right: 12px;
-    background: rgba(255,255,255,0.08); color:white;
-    padding: 6px 10px; border-radius:6px; font-size:13px;
-  }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iPad Dashboard v5.0</title>
+  <style>
+    body {
+      margin:0;
+      padding:0;
+      height:100vh;
+      width:100vw;
+      background-color:black;
+      color:white;
+      font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      justify-content:flex-start;
+      padding:20px;
+    }
+    #time { font-size:120px; font-weight:600; }
+    #date { font-size:40px; margin-top:10px; }
+    #weather { font-size:80px; margin-top:30px; white-space:pre-line; }
+    #version-badge { position:fixed; top:12px; right:12px; background:rgba(255,255,255,0.08); color:#fff; padding:6px 10px; border-radius:6px; font-size:13px; border:1px solid rgba(255,255,255,0.04); box-shadow:0 2px 6px rgba(0,0,0,0.6);}
+  </style>
 </head>
 <body>
-  <div id="top-left">
-    <div id="time">--:--:--</div>
-    <div id="date">Loading...</div>
-  </div>
+  <div id="time">--:--:--</div>
+  <div id="date">Loading date...</div>
+  <div id="weather">Loading weather...</div>
+  <div id="version-badge">v5.0</div>
 
-  <div id="weather-container">
-    <img id="weather" src="https://wttr.in/Greenfield,MA.png?1&u" alt="Current weather">
-  </div>
+  <script>
+    // Update time and date
+    function updateTime() {
+      const now = new Date();
+      const hours = now.getHours() % 12 || 12;
+      const minutes = String(now.getMinutes()).padStart(2,'0');
+      const seconds = String(now.getSeconds()).padStart(2,'0');
+      const ampm = now.getHours() >= 12 ? 'PM' : 'AM';
+      document.getElementById('time').innerText = `${hours}:${minutes}:${seconds} ${ampm}`;
+      document.getElementById('date').innerText = now.toDateString();
+    }
+    updateTime();
+    setInterval(updateTime, 1000);
 
-  <div id="version-badge">v4.2</div>
+    // Fetch weather dynamically (won't block page load)
+    async function loadWeather() {
+      const weatherEl = document.getElementById('weather');
+      const url = "https://wttr.in/Greenfield,MA?format=3&u"; // simple emoji+temp format
+      try {
+        const res = await fetch(url);
+        if(res.ok) {
+          const text = await res.text();
+          weatherEl.innerText = text;
+        } else {
+          weatherEl.innerText = "Weather unavailable";
+        }
+      } catch(e) {
+        weatherEl.innerText = "Weather fetch failed";
+      }
+    }
 
-<script>
-function updateClock() {
-  const now = new Date();
-  let h = now.getHours(), m = now.getMinutes(), s = now.getSeconds();
-  const ampm = h >= 12 ? 'PM' : 'AM';
-  h = h % 12 || 12;
-  document.getElementById('time').innerText =
-    `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')} ${ampm}`;
-  document.getElementById('date').innerText = now.toDateString();
-}
-setInterval(updateClock, 1000);
-updateClock();
-</script>
+    loadWeather();
+    // Optional: refresh every 10 minutes
+    setInterval(loadWeather, 600000);
+  </script>
 </body>
 </html>
