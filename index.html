@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clock + Weather Test</title>
+<title>Clock + Weather Forecast</title>
 <style>
   html, body {
     margin: 0;
@@ -16,6 +16,12 @@
     color: white;
     font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
     text-align: center;
+  }
+
+  #container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
   }
 
   #time {
@@ -38,13 +44,25 @@
     font-size: 3vw;
     margin-top: 2vw;
   }
+
+  #forecast {
+    font-size: 2vw;
+    margin-top: 2vw;
+    line-height: 1.6;
+    max-width: 90vw;
+  }
+
+  .forecast-item {
+    margin: 0.5vw 0;
+  }
 </style>
 </head>
 <body>
-<div>
+<div id="container">
   <div id="time">--:--<span id="seconds">--</span></div>
   <div id="date">Loading date...</div>
   <div id="weather">Loading weather...</div>
+  <div id="forecast">Loading forecast...</div>
 </div>
 
 <script>
@@ -52,8 +70,9 @@
   const secEl = document.getElementById("seconds");
   const dateEl = document.getElementById("date");
   const weatherEl = document.getElementById("weather");
+  const forecastEl = document.getElementById("forecast");
 
-  // Clock function
+  // CLOCK
   function updateClock() {
     const now = new Date();
     let hours = now.getHours();
@@ -70,27 +89,53 @@
   setInterval(updateClock, 1000);
   updateClock();
 
-  // Weather function using wttr.in
+  // WEATHER + FORECAST
   async function getWeather(zip = "01301") {
     try {
-      // &u=f specifies US customary units (Fahrenheit)
       const res = await fetch(`https://wttr.in/${zip}?format=j1&u=f`);
       if (!res.ok) throw new Error("Failed to fetch weather");
       const data = await res.json();
 
+      // CURRENT CONDITIONS
       const current = data.current_condition[0];
-      const tempF = current.temp_F; // Fahrenheit
+      const tempF = current.temp_F;
       const condition = current.weatherDesc[0].value;
+      weatherEl.textContent = `Now: ${tempF}°F, ${condition}`;
 
-      weatherEl.textContent = `Current: ${tempF}°F, ${condition}`;
-      console.log("Full wttr data:", data);
+      // 12-HOUR FORECAST (first 4 x 3-hour chunks)
+      const todayHours = data.weather[0].hourly.slice(0, 4);
+      forecastEl.innerHTML = "<strong>Next 12 hours:</strong><br>";
+
+      todayHours.forEach(hour => {
+        const timeLabel = formatTime(hour.time);
+        const desc = hour.weatherDesc[0].value;
+        const temp = hour.tempF;
+        const rain = hour.chanceofrain;
+        const item = document.createElement("div");
+        item.classList.add("forecast-item");
+        item.textContent = `${timeLabel}: ${temp}°F, ${desc} (Rain: ${rain}%)`;
+        forecastEl.appendChild(item);
+      });
+
     } catch (err) {
       console.error(err);
-      weatherEl.textContent = "Weather not available.";
+      weatherEl.textContent = "Weather unavailable.";
+      forecastEl.textContent = "";
     }
   }
 
-  getWeather(); // fixed zip code
+  // Convert wttr time (e.g., "0", "300", "600") into readable format
+  function formatTime(t) {
+    const num = parseInt(t, 10);
+    const hours = Math.floor(num / 100);
+    const date = new Date();
+    date.setHours(hours);
+    date.setMinutes(0);
+    let label = date.toLocaleTimeString([], { hour: 'numeric', hour12: true });
+    return label;
+  }
+
+  getWeather();
 </script>
 </body>
 </html>
