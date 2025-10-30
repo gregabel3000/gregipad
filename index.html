@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clock + Weather Forecast v1.2</title>
+<title>Clock + Weather Forecast v1.3</title>
 <style>
   html, body {
     margin: 0;
@@ -87,7 +87,7 @@
   <div id="raw-url"></div>
 </div>
 
-<div id="version-badge">v1.2</div>
+<div id="version-badge">v1.3</div>
 
 <script>
 const timeEl = document.getElementById("time");
@@ -97,8 +97,8 @@ const weatherEl = document.getElementById("weather");
 const forecastEl = document.getElementById("forecast");
 const rawUrlEl = document.getElementById("raw-url");
 
-// CITY + STATE instead of ZIP
-const LOCATION = "Amherst,MA";
+// CITY + STATE
+const LOCATION = "Greenfield,MA";
 const API_URL = `https://wttr.in/${encodeURIComponent(LOCATION)}?format=j1&u=f`;
 
 // Show API URL for debugging
