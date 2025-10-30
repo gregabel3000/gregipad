@@ -1,87 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Clock + Weather vOld</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clock + Weather v2.0</title>
 <style>
-body { margin:0; background:black; color:white; font-family:sans-serif; text-align:center; }
-#time { font-size:60px; font-weight:bold; margin-top:40px; }
-#date { font-size:24px; margin-top:10px; }
-#weather { font-size:24px; margin-top:20px; }
-#forecast { font-size:18px; margin-top:20px; line-height:1.5; }
+  body {
+    margin: 0;
+    background: black;
+    color: white;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+    text-align: center;
+  }
+
+  #container {
+    display: block;
+    padding-top: 50px;
+  }
+
+  #time {
+    font-size: 60px;
+    font-weight: bold;
+  }
+
+  #date {
+    font-size: 24px;
+    margin-top: 10px;
+  }
+
+  #weather {
+    font-size: 24px;
+    margin-top: 20px;
+  }
+
+  #version-badge {
+    position: fixed;
+    top: 12px;
+    right: 12px;
+    background: rgba(255,255,255,0.1);
+    color: #fff;
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    border: 1px solid rgba(255,255,255,0.2);
+    z-index: 9999;
+  }
 </style>
 </head>
 <body>
 
-<div id="time">--:--</div>
-<div id="date">Loading date...</div>
-<div id="weather">Loading weather...</div>
-<div id="forecast">Loading forecast...</div>
+<div id="container">
+  <div id="time">--:--</div>
+  <div id="date">Loading date...</div>
+  <div id="weather">Loading weather...</div>
+</div>
+
+<div id="version-badge">v2.0</div>
 
 <script>
+// ----- CLOCK -----
 var timeEl = document.getElementById('time');
 var dateEl = document.getElementById('date');
-var weatherEl = document.getElementById('weather');
-var forecastEl = document.getElementById('forecast');
 
-var LOCATION = "Greenfield,MA";
-var API_URL = 'https://wttr.in/' + encodeURIComponent(LOCATION) + '?format=j1&u=f';
-
-// CLOCK
 function updateClock() {
   var now = new Date();
   var hours = now.getHours();
   var minutes = now.getMinutes();
-  if(hours>12){ hours-=12; }
-  if(hours===0){ hours=12; }
-  if(minutes<10){ minutes='0'+minutes; }
-  timeEl.innerHTML = hours+':'+minutes;
-  var month = now.getMonth()+1;
+  if(hours > 12) { hours -= 12; }
+  if(hours === 0) { hours = 12; }
+  if(minutes < 10) { minutes = '0' + minutes; }
+  timeEl.innerHTML = hours + ':' + minutes;
+
+  var month = now.getMonth() + 1;
   var day = now.getDate();
   var year = now.getFullYear();
-  dateEl.innerHTML = month+'/'+day+'/'+year;
+  dateEl.innerHTML = month + '/' + day + '/' + year;
 }
 setInterval(updateClock, 1000);
 updateClock();
 
-// WEATHER
-function getWeather() {
-  var xhr = new XMLHttpRequest();
-  xhr.open('GET', API_URL, true);
-  xhr.onreadystatechange = function(){
-    if(xhr.readyState===4 && xhr.status===200){
-      try {
-        var data = JSON.parse(xhr.responseText);
-        var current = data.current_condition[0];
-        weatherEl.innerHTML = "Now: "+current.temp_F+"°F, "+current.weatherDesc[0].value;
+// ----- WEATHER -----
+var weatherEl = document.getElementById('weather');
+var location = "Greenfield,MA";
+var url = "https://wttr.in/" + encodeURIComponent(location) + "?format=2&u";
 
-        var now = new Date();
-        var currentHour = now.getHours();
-        var hoursToday = data.weather[0].hourly;
-        var forecastHtml = "<b>Remaining today:</b><br>";
-
-        for(var i=0;i<hoursToday.length;i++){
-          var h = hoursToday[i];
-          var hTime = parseInt(h.time,10)/100;
-          if(hTime>=currentHour){
-            var hourLabel = hTime;
-            if(hourLabel===0){hourLabel=12;} else if(hourLabel>12){hourLabel-=12;}
-            var ampm = hTime>=12?'PM':'AM';
-            forecastHtml += hourLabel+ampm+": "+h.tempF+"°F, "+h.weatherDesc[0].value+" (Rain:"+h.chanceofrain+"%)<br>";
-          }
-        }
-        forecastEl.innerHTML = forecastHtml;
-      } catch(e){
-        weatherEl.innerHTML = "Weather error";
-        forecastEl.innerHTML = "";
-      }
+var xhr = new XMLHttpRequest();
+xhr.open('GET', url, true);
+xhr.onreadystatechange = function() {
+  if(xhr.readyState === 4){
+    if(xhr.status === 200){
+      weatherEl.innerText = xhr.responseText;
+    } else {
+      weatherEl.innerText = "Weather unavailable";
     }
-  };
-  xhr.send();
-}
-
-getWeather();
+  }
+};
+xhr.send();
 </script>
 
 </body>
 </html>
+
