@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Greg’s Clock — Stable</title>
+  <title>Greg’s Clock — Fixed</title>
   <style>
     html, body {
       margin: 0;
@@ -55,13 +55,18 @@
       font-size: clamp(48px, 14vw, 140px);
       line-height: 1;
       text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+      display: inline-flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    #hm {
       display: inline-block;
     }
 
     #seconds {
       font-size: 0.35em;
       vertical-align: super;
-      margin-left: 6px;
       opacity: 0.95;
     }
 
@@ -107,17 +112,24 @@
 
   <div id="content">
     <div class="clock-wrap" aria-live="polite">
-      <div id="time-main">--:--<span id="seconds">--</span></div>
+      <div id="time-main"><span id="hm">--:--</span><span id="seconds">--</span></div>
       <div id="date">Loading...</div>
     </div>
   </div>
 
   <div id="diag">Starting...</div>
-  <div id="version-badge">v11-stable</div>
+  <div id="version-badge">v11-fixed</div>
 
   <script>
     (function () {
-      // Safe diagnostic setter
+      // Simple cross-browser pad function (no padStart)
+      function leftPad(input, length, padChar) {
+        padChar = (typeof padChar === 'string' && padChar.length > 0) ? padChar : '0';
+        var s = String(input);
+        while (s.length < length) s = padChar + s;
+        return s;
+      }
+
       function setDiag(msg) {
         try {
           var d = document.getElementById('diag');
@@ -126,7 +138,6 @@
         try { console.log(msg); } catch (e) { }
       }
 
-      // Global error + promise rejection handlers
       window.addEventListener('error', function (ev) {
         var msg = 'ERROR: ' + (ev && ev.message ? ev.message : JSON.stringify(ev));
         setDiag(msg);
@@ -140,44 +151,38 @@
       });
 
       try {
-        // Elements
-        var timeMain = document.getElementById('time-main');
+        var hmEl = document.getElementById('hm');
         var secEl = document.getElementById('seconds');
         var dateEl = document.getElementById('date');
         var bgEl = document.getElementById('gradient-bg');
 
-        // Robust clock updater
         function updateClock() {
           try {
             var now = new Date();
             var hrs = now.getHours();
-            var minutes = now.getMinutes();
-            var seconds = now.getSeconds();
+            var mins = now.getMinutes();
+            var secs = now.getSeconds();
 
-            // Format 12-hour with AM/PM
             var ampm = hrs >= 12 ? 'PM' : 'AM';
             var hrs12 = hrs % 12;
-            hrs12 = hrs12 ? hrs12 : 12; // 0 => 12
+            hrs12 = hrs12 ? hrs12 : 12;
 
-            var hrsStr = String(hrs12).padStart(2, '0');
-            var minStr = String(minutes).padStart(2, '0');
-            var secStr = String(seconds).padStart(2, '0');
+            var hrsStr = leftPad(hrs12, 2, '0');
+            var minStr = leftPad(mins, 2, '0');
+            var secStr = leftPad(secs, 2, '0');
 
-            // Ensure container elements exist before writing
-            if (timeMain) {
-              // keep seconds span separate so styling stays intact
-              timeMain.firstChild && (timeMain.firstChild.nodeValue = hrsStr + ':' + minStr);
-            } else {
-              // fallback: attempt to recreate
+            if (!hmEl || !secEl || !dateEl) {
+              // recreate HTML if somehow missing
               var wrap = document.querySelector('.clock-wrap');
               if (wrap) {
-                wrap.innerHTML = '<div id="time-main">' + hrsStr + ':' + minStr + '<span id="seconds">' + secStr + '</span></div><div id="date"></div>';
-                timeMain = document.getElementById('time-main');
+                wrap.innerHTML = '<div id="time-main"><span id="hm">' + hrsStr + ':' + minStr + '</span><span id="seconds">' + secStr + '</span></div><div id="date"></div>';
+                hmEl = document.getElementById('hm');
                 secEl = document.getElementById('seconds');
                 dateEl = document.getElementById('date');
               }
             }
 
+            if (hmEl) hmEl.textContent = hrsStr + ':' + minStr + ' ' + ampm;
             if (secEl) secEl.textContent = secStr;
             if (dateEl) dateEl.textContent = now.toDateString();
 
@@ -187,98 +192,74 @@
           }
         }
 
-        // Start clock immediately and every second
-        try {
-          updateClock();
-          setInterval(updateClock, 1000);
-        } catch (err) {
-          setDiag('Failed to start clock: ' + (err && err.message ? err.message : String(err)));
-        }
+        // Start clock
+        updateClock();
+        setInterval(updateClock, 1000);
 
-        // Image loading (non-blocking). No local fallback.
+        // Non-blocking background loader (no local fallback)
         (function loadBackground() {
-          try {
-            if (!bgEl) { setDiag('No background element'); return; }
+          if (!bgEl) { setDiag('No background element'); return; }
 
-            var pexelsIds = [
-              414612, 2014422, 326055, 158607, 34950,
-              3156381, 1420706, 247932, 355423, 1108099
-            ];
+          var pexelsIds = [
+            414612, 2014422, 326055, 158607, 34950,
+            3156381, 1420706, 247932, 355423, 1108099
+          ];
 
-            function pexelsUrlForId(id) {
-              return "https://images.pexels.com/photos/" + id + "/pexels-photo-" + id + ".jpeg";
-            }
-
-            function getTargetWidth(maxCap) {
-              maxCap = maxCap || 1280;
-              var w = Math.min(maxCap, Math.round(window.innerWidth || maxCap));
-              return Math.max(640, w);
-            }
-
-            function buildVariant(url, width, quality) {
-              var q = quality || 80;
-              return url + "?auto=compress&cs=tinysrgb&dpr=1&w=" + width + "&q=" + q;
-            }
-
-            function tryImageSequence(urls, onSuccess, onFail) {
-              var i = 0;
-              function next() {
-                if (i >= urls.length) { onFail(); return; }
-                var u = urls[i++];
-                setDiag('Trying image: ' + (u.length > 80 ? u.slice(0,80) + '...' : u));
-                var t = new Image();
-                t.onload = function () { onSuccess(u); };
-                t.onerror = function () { next(); };
-                // load async
-                t.src = u;
-              }
-              setTimeout(next, 10);
-            }
-
-            var id = pexelsIds[Math.floor(Math.random() * pexelsIds.length)];
-            var base = pexelsUrlForId(id);
-            var w = getTargetWidth(1280);
-            var small = buildVariant(base, w, 80);
-            var medium = buildVariant(base, Math.min(1920, Math.round(w * 1.25)), 84);
-            var original = base;
-
-            tryImageSequence([small, medium, original],
-              function (workingUrl) {
-                try {
-                  setDiag('Loaded background');
-                  bgEl.style.backgroundImage = "url('" + workingUrl + "')";
-                  bgEl.style.backgroundSize = 'cover';
-                  bgEl.style.backgroundPosition = 'center';
-                  bgEl.style.backgroundRepeat = 'no-repeat';
-                } catch (err) {
-                  setDiag('Background set error: ' + (err && err.message ? err.message : String(err)));
-                  console.error(err);
-                }
-              },
-              function () {
-                setDiag('All image variants failed; keeping gradient');
-              }
-            );
-
-          } catch (err) {
-            setDiag('Image loader error: ' + (err && err.message ? err.message : String(err)));
-            console.error(err);
+          function pexelsUrl(id) {
+            return "https://images.pexels.com/photos/" + id + "/pexels-photo-" + id + ".jpeg";
           }
-        })();
 
-        // Refresh background every 6 hours
-        try {
-          setInterval(function () {
-            // reload background only (no page reload)
-            try {
-              // force new random image
-              (function refresh() {
-                var evt = new Event('refreshBackground');
-                window.dispatchEvent(evt);
-              })();
-            } catch (e) { console.error(e); }
-          }, 6 * 60 * 60 * 1000);
-        } catch (e) { /* ignore */ }
+          function getWidth(maxCap) {
+            maxCap = maxCap || 1280;
+            var w = Math.min(maxCap, Math.round(window.innerWidth || maxCap));
+            return Math.max(640, w);
+          }
+
+          function build(url, w, q) {
+            q = q || 80;
+            return url + "?auto=compress&cs=tinysrgb&dpr=1&w=" + w + "&q=" + q;
+          }
+
+          function trySequence(urls, onSuccess, onFail) {
+            var i = 0;
+            function next() {
+              if (i >= urls.length) { onFail(); return; }
+              var u = urls[i++];
+              setDiag('Trying image: ' + (u.length > 80 ? u.slice(0,80) + '...' : u));
+              var t = new Image();
+              t.onload = function () { onSuccess(u); };
+              t.onerror = function () { next(); };
+              t.src = u;
+            }
+            // small async kick so it doesn't block
+            setTimeout(next, 10);
+          }
+
+          var id = pexelsIds[Math.floor(Math.random() * pexelsIds.length)];
+          var base = pexelsUrl(id);
+          var w = getWidth(1280);
+          var small = build(base, w, 80);
+          var medium = build(base, Math.min(1920, Math.round(w * 1.25)), 84);
+          var original = base;
+
+          trySequence([small, medium, original],
+            function (workingUrl) {
+              try {
+                setDiag('Loaded background');
+                bgEl.style.backgroundImage = "url('" + workingUrl + "')";
+                bgEl.style.backgroundSize = 'cover';
+                bgEl.style.backgroundPosition = 'center';
+                bgEl.style.backgroundRepeat = 'no-repeat';
+              } catch (err) {
+                setDiag('Background set error: ' + (err && err.message ? err.message : String(err)));
+                console.error(err);
+              }
+            },
+            function () {
+              setDiag('All image variants failed; keeping gradient');
+            }
+          );
+        })();
 
         setDiag('Running');
 
