@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard v2.9</title>
+<title>Dashboard v3.0</title>
 <style>
   body {
     margin: 0;
@@ -28,11 +28,18 @@
     margin-top: 10px;
   }
 
-  #weather-img {
+  #weather-box {
     margin-top: 30px;
-    width: auto;
-    max-width: 90%;
-    height: auto;
+  }
+
+  #weather-box iframe {
+    border: none;
+    background: black;
+    color: white;
+    width: 300px;   /* adjust width as needed */
+    height: 60px;   /* adjust height as needed */
+    font-size: 60px; /* makes emojis huge */
+    text-align: center;
   }
 
   #version-badge {
@@ -54,12 +61,12 @@
 <div id="container">
   <div id="time">--:--</div>
   <div id="date">Loading date...</div>
-  <div id="weather">
-    <img id="weather-img" src="https://wttr.in/Greenfield,MA?format=3&u" alt="Weather">
+  <div id="weather-box">
+    <iframe src="https://wttr.in/Greenfield,MA?format=3&u" sandbox></iframe>
   </div>
 </div>
 
-<div id="version-badge">v2.9</div>
+<div id="version-badge">v3.0</div>
 
 <script>
 // ----- CLOCK -----
