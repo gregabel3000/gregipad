@@ -2,37 +2,43 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-  <title>Greg’s Clock — Fixed</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Greg’s Clock — Gradient Fallback Guaranteed</title>
   <style>
+    /* Base reset */
     html, body {
+      height: 100%;
       margin: 0;
       padding: 0;
-      height: 100%;
-      width: 100%;
       font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
       color: white;
-      background: black;
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 50%, #4b2b7f 100%);
       overflow: hidden;
     }
 
+    /* Ensure gradient shows on load (body as ultimate fallback) */
     #gradient-bg {
       position: fixed;
       inset: 0;
       z-index: 0;
-      background: linear-gradient(to right, rgba(30,60,114,0.6), rgba(42,82,152,0.35));
+      /* initial gradient (same as body) so no flash to black */
+      background: linear-gradient(135deg, rgba(30,60,114,1) 0%, rgba(42,82,152,1) 50%, rgba(75,43,127,1) 100%);
       background-size: cover;
       background-position: center;
-      transition: background-image 1s ease-in-out, background 1s ease-in-out;
+      transition: background-image 800ms ease-in-out, opacity 800ms ease-in-out;
+      will-change: background-image, opacity;
     }
 
+    /* Semi-opaque overlay to keep text readable */
     #overlay {
       position: fixed;
       inset: 0;
       z-index: 1;
-      background-color: rgba(0,0,0,0.42);
+      background-color: rgba(0,0,0,0.40);
+      pointer-events: none;
     }
 
+    /* Content */
     #content {
       position: relative;
       z-index: 2;
@@ -40,12 +46,12 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      padding: 40px;
+      padding: 32px;
       box-sizing: border-box;
+      text-align: center;
     }
 
     .clock-wrap {
-      text-align: center;
       user-select: none;
       -webkit-user-select: none;
     }
@@ -54,35 +60,28 @@
       font-weight: 600;
       font-size: clamp(48px, 14vw, 140px);
       line-height: 1;
-      text-shadow: 0 2px 10px rgba(0,0,0,0.7);
+      text-shadow: 0 3px 12px rgba(0,0,0,0.7);
       display: inline-flex;
       align-items: baseline;
-      gap: 8px;
+      gap: 10px;
     }
 
-    #hm {
-      display: inline-block;
-    }
-
-    #seconds {
-      font-size: 0.35em;
-      vertical-align: super;
-      opacity: 0.95;
-    }
+    #hm { display: inline-block; }
+    #seconds { font-size: 0.35em; vertical-align: super; opacity: .95; }
 
     #date {
       margin-top: 10px;
-      font-size: clamp(16px, 3.2vw, 40px);
+      font-size: clamp(16px, 3.2vw, 36px);
       text-shadow: 0 1px 8px rgba(0,0,0,0.6);
     }
 
+    /* Diagnostic + version UI */
     #diag {
       position: fixed;
       top: 12px;
       left: 12px;
       z-index: 9999;
       background: rgba(0,0,0,0.6);
-      color: #fff;
       padding: 6px 10px;
       border-radius: 6px;
       font-size: 13px;
@@ -98,17 +97,19 @@
       right: 12px;
       z-index: 9999;
       background: rgba(255,255,255,0.06);
-      color: #fff;
       padding: 6px 10px;
       border-radius: 6px;
       font-size: 13px;
-      border: 1px solid rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.03);
     }
+
+    /* Make sure diag shows full text on hover (handy for long errors) */
+    #diag:hover { white-space: normal; max-width: 80%; }
   </style>
 </head>
 <body>
-  <div id="gradient-bg"></div>
-  <div id="overlay"></div>
+  <div id="gradient-bg" aria-hidden="true"></div>
+  <div id="overlay" aria-hidden="true"></div>
 
   <div id="content">
     <div class="clock-wrap" aria-live="polite">
@@ -118,15 +119,15 @@
   </div>
 
   <div id="diag">Starting...</div>
-  <div id="version-badge">v11-fixed</div>
+  <div id="version-badge">v11-fallback</div>
 
   <script>
     (function () {
-      // Simple cross-browser pad function (no padStart)
-      function leftPad(input, length, padChar) {
-        padChar = (typeof padChar === 'string' && padChar.length > 0) ? padChar : '0';
-        var s = String(input);
-        while (s.length < length) s = padChar + s;
+      // tiny left-pad for old webviews
+      function leftPad(s, length, ch) {
+        ch = (typeof ch === 'string' && ch.length) ? ch : '0';
+        s = String(s);
+        while (s.length < length) s = ch + s;
         return s;
       }
 
@@ -134,19 +135,20 @@
         try {
           var d = document.getElementById('diag');
           if (d) d.innerText = msg;
-        } catch (e) { /* noop */ }
+        } catch (e) { /* ignore */ }
         try { console.log(msg); } catch (e) { }
       }
 
+      // Global error handlers so diag always shows something useful
       window.addEventListener('error', function (ev) {
-        var msg = 'ERROR: ' + (ev && ev.message ? ev.message : JSON.stringify(ev));
-        setDiag(msg);
+        var m = ev && ev.message ? ev.message : String(ev);
+        setDiag('ERROR: ' + m);
         console.error(ev.error || ev);
       });
 
       window.addEventListener('unhandledrejection', function (ev) {
-        var reason = ev && ev.reason ? ev.reason : 'unhandled rejection';
-        setDiag('Promise Rejection: ' + (reason && reason.message ? reason.message : String(reason)));
+        var r = ev && ev.reason ? ev.reason : ev;
+        setDiag('Promise Rejection: ' + (r && r.message ? r.message : String(r)));
         console.error(ev);
       });
 
@@ -164,15 +166,14 @@
             var secs = now.getSeconds();
 
             var ampm = hrs >= 12 ? 'PM' : 'AM';
-            var hrs12 = hrs % 12;
-            hrs12 = hrs12 ? hrs12 : 12;
+            var hrs12 = hrs % 12; hrs12 = hrs12 ? hrs12 : 12;
 
             var hrsStr = leftPad(hrs12, 2, '0');
             var minStr = leftPad(mins, 2, '0');
             var secStr = leftPad(secs, 2, '0');
 
             if (!hmEl || !secEl || !dateEl) {
-              // recreate HTML if somehow missing
+              // re-create DOM if missing
               var wrap = document.querySelector('.clock-wrap');
               if (wrap) {
                 wrap.innerHTML = '<div id="time-main"><span id="hm">' + hrsStr + ':' + minStr + '</span><span id="seconds">' + secStr + '</span></div><div id="date"></div>';
@@ -185,28 +186,26 @@
             if (hmEl) hmEl.textContent = hrsStr + ':' + minStr + ' ' + ampm;
             if (secEl) secEl.textContent = secStr;
             if (dateEl) dateEl.textContent = now.toDateString();
-
           } catch (err) {
             setDiag('Clock error: ' + (err && err.message ? err.message : String(err)));
             console.error(err);
           }
         }
 
-        // Start clock
         updateClock();
         setInterval(updateClock, 1000);
 
-        // Non-blocking background loader (no local fallback)
+        // Image loader that will not remove the gradient fallback on failure
         (function loadBackground() {
           if (!bgEl) { setDiag('No background element'); return; }
 
-          var pexelsIds = [
-            414612, 2014422, 326055, 158607, 34950,
-            3156381, 1420706, 247932, 355423, 1108099
-          ];
+          // If you suspect network/CORS problems, this will show up in console
+          setDiag('Starting image load');
+
+          var pexelsIds = [414612,2014422,326055,158607,34950,3156381,1420706,247932,355423,1108099];
 
           function pexelsUrl(id) {
-            return "https://images.pexels.com/photos/" + id + "/pexels-photo-" + id + ".jpeg";
+            return 'https://images.pexels.com/photos/' + id + '/pexels-photo-' + id + '.jpeg';
           }
 
           function getWidth(maxCap) {
@@ -215,9 +214,9 @@
             return Math.max(640, w);
           }
 
-          function build(url, w, q) {
+          function build(u, w, q) {
             q = q || 80;
-            return url + "?auto=compress&cs=tinysrgb&dpr=1&w=" + w + "&q=" + q;
+            return u + '?auto=compress&cs=tinysrgb&dpr=1&w=' + w + '&q=' + q;
           }
 
           function trySequence(urls, onSuccess, onFail) {
@@ -225,13 +224,19 @@
             function next() {
               if (i >= urls.length) { onFail(); return; }
               var u = urls[i++];
-              setDiag('Trying image: ' + (u.length > 80 ? u.slice(0,80) + '...' : u));
-              var t = new Image();
-              t.onload = function () { onSuccess(u); };
-              t.onerror = function () { next(); };
-              t.src = u;
+              // Log short and long in console, but show short in diag
+              setDiag('Trying image ' + i + ' of ' + urls.length);
+              console.log('Attempting image URL:', u);
+              var img = new Image();
+              var done = false;
+              img.onload = function () { if (!done) { done = true; onSuccess(u); } };
+              img.onerror = function (e) { console.warn('Image failed to load:', u, e); next(); };
+              // Setting src starts loading
+              img.src = u;
+              // Safety timeout in case browser never fires onerror (rare)
+              setTimeout(function () { if (!done) { console.warn('Timeout for', u); next(); } }, 8000);
             }
-            // small async kick so it doesn't block
+            // start asynchronously so UI thread isn't blocked
             setTimeout(next, 10);
           }
 
@@ -245,27 +250,30 @@
           trySequence([small, medium, original],
             function (workingUrl) {
               try {
-                setDiag('Loaded background');
+                setDiag('Loaded image; applying background');
+                console.log('Background image successfully loaded:', workingUrl);
+                // apply image on top of gradient. If image is broken, we never remove the gradient.
                 bgEl.style.backgroundImage = "url('" + workingUrl + "')";
                 bgEl.style.backgroundSize = 'cover';
                 bgEl.style.backgroundPosition = 'center';
                 bgEl.style.backgroundRepeat = 'no-repeat';
               } catch (err) {
-                setDiag('Background set error: ' + (err && err.message ? err.message : String(err)));
+                setDiag('Background apply error: ' + (err && err.message ? err.message : String(err)));
                 console.error(err);
               }
             },
             function () {
-              setDiag('All image variants failed; keeping gradient');
+              // Do not remove the gradient. Report full reason to console
+              var msg = 'All image variants failed; keeping gradient fallback';
+              setDiag(msg);
+              console.warn(msg);
             }
           );
         })();
 
-        setDiag('Running');
-
-      } catch (initErr) {
-        setDiag('Init error: ' + (initErr && initErr.message ? initErr.message : String(initErr)));
-        console.error(initErr);
+      } catch (err) {
+        setDiag('Init error: ' + (err && err.message ? err.message : String(err)));
+        console.error(err);
       }
     })();
   </script>
