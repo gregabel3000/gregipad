@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dashboard v2.2</title>
+<title>Dashboard v2.3</title>
 <style>
   body {
     margin: 0;
@@ -55,7 +55,7 @@
   <div id="weather">Loading weather...</div>
 </div>
 
-<div id="version-badge">v2.2</div>
+<div id="version-badge">v2.3</div>
 
 <script>
 // ----- CLOCK -----
@@ -81,10 +81,9 @@ updateClock();
 
 // ----- WEATHER -----
 var weatherEl = document.getElementById('weather');
-var location = "~Greenfield"; // internal fetch, tilde prevents wttr.in redirect
-var url = "https://wttr.in/" + encodeURIComponent(location) + "?format=2&u";
+// Use the absolute URL to avoid GitHub Pages treating it as a relative path
+var url = "https://wttr.in/~Greenfield?format=2&u";
 
-// Use XHR for compatibility with old Safari/iPads
 var xhr = new XMLHttpRequest();
 xhr.open('GET', url, true);
 xhr.onreadystatechange = function() {
