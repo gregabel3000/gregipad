@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>iPad Dashboard v8.0</title>
+  <title>iPad Dashboard v8.1</title>
   <style>
     body {
       margin:0;
@@ -44,23 +44,39 @@
 
   <div id="time">--:--:--</div>
   <div id="date">Loading date...</div>
-  <div id="version-badge">v8.0</div>
+  <div id="version-badge">v8.1</div>
 
   <script>
+    function pad(num) {
+      return (num < 10 ? "0" : "") + num;
+    }
+
     function updateClock() {
-      const now = new Date();
+      var now = new Date();
 
-      let hours = now.getHours();
-      const minutes = String(now.getMinutes()).padStart(2,'0');
-      const seconds = String(now.getSeconds()).padStart(2,'0');
+      var hours = now.getHours();
+      var minutes = pad(now.getMinutes());
+      var seconds = pad(now.getSeconds());
 
-      const ampm = hours >= 12 ? "PM" : "AM";
-      hours = hours % 12 || 12;
+      var ampm = (hours >= 12) ? "PM" : "AM";
+      hours = hours % 12;
+      if (hours === 0) hours = 12;
 
-      document.getElementById("time").innerText =
+      document.getElementById("time").innerHTML =
         hours + ":" + minutes + ":" + seconds + " " + ampm;
 
-      document.getElementById("date").innerText = now.toDateString();
+      // old-school date format
+      var days = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+      var months = ["Jan","Feb","Mar","Apr","May","Jun","Jul",
+                    "Aug","Sep","Oct","Nov","Dec"];
+
+      var dateStr =
+        days[now.getDay()] + " " +
+        months[now.getMonth()] + " " +
+        now.getDate() + ", " +
+        now.getFullYear();
+
+      document.getElementById("date").innerHTML = dateStr;
     }
 
     updateClock();
