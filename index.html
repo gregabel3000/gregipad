@@ -29,7 +29,7 @@
   <div id="time">--:--:--</div>
   <div id="date">Loading date...</div>
   <div id="weather">Loading weather...</div>
-  <div id="version-badge">v5.0</div>
+  <div id="version-badge">v6.0</div>
 
   <script>
     // Update time and date
@@ -48,7 +48,7 @@
     // Fetch weather dynamically (won't block page load)
     async function loadWeather() {
       const weatherEl = document.getElementById('weather');
-      const url = "https://wttr.in/Greenfield,MA?format=2"; // simple emoji+temp format
+      const url = "https://wttr.in/Greenfield,MA?format=2&u"; // simple emoji+temp format
       try {
         const res = await fetch(url);
         if(res.ok) {
