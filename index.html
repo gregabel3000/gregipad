@@ -1,74 +1,50 @@
-<!-- Version 8 -->
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Clock v8</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>iPad Dashboard v9</title>
   <style>
     body {
-      margin: 0;
-      padding: 0;
-      font-family: Arial, sans-serif;
-      background: black;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      text-align: center;
+      margin:0;
+      padding:20px;
+      height:100vh;
+      width:100vw;
+      background-color:black;
+      color:white;
+      font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      justify-content:flex-start;
     }
-    #time {
-      font-size: 4rem;
-      letter-spacing: 2px;
-      margin-bottom: 10px;
-    }
-    #date {
-      font-size: 1.6rem;
-      margin-bottom: 6px;
-    }
-    #weekday {
-      font-size: 1.4rem;
-      opacity: 0.85;
-    }
+    #time { font-size:120px; font-weight:600; }
+    #date { font-size:40px; margin-top:10px; }
+    #weekday { font-size:30px; margin-top:5px; }
+    #version-badge { position:fixed; top:12px; right:12px; background:rgba(255,255,255,0.08); color:#fff; padding:6px 10px; border-radius:6px; font-size:13px; border:1px solid rgba(255,255,255,0.04); box-shadow:0 2px 6px rgba(0,0,0,0.6);}
   </style>
 </head>
 <body>
-  <div id="time">-----</div>
-  <div id="date">loading date</div>
-  <div id="weekday">loading weekday</div>
+  <div id="time">--:--:--</div>
+  <div id="date">Loading date...</div>
+  <div id="weekday"></div>
+  <div id="version-badge">v9</div>
 
   <script>
-    function updateClock() {
+    function updateTime() {
       const now = new Date();
-
-      let hours = now.getHours();
-      let minutes = now.getMinutes();
-      let seconds = now.getSeconds();
-
-      const ampm = hours >= 12 ? "pm" : "am";
-      hours = hours % 12;
-      if (hours === 0) hours = 12;
-
-      const timeStr =
-        String(hours).padStart(2, "0") + ":" +
-        String(minutes).padStart(2, "0") + ":" +
-        String(seconds).padStart(2, "0") + ampm;
-
-      document.getElementById("time").textContent = timeStr;
-
-      const month = now.toLocaleString("en-US", { month: "long" });
-      const day = now.getDate();
-      const year = now.getFullYear();
-      document.getElementById("date").textContent = `${month} ${day}, ${year}`;
-
-      const weekday = now.toLocaleString("en-US", { weekday: "long" });
-      document.getElementById("weekday").textContent = weekday;
+      const hours = now.getHours() % 12 || 12;
+      const minutes = String(now.getMinutes()).padStart(2,'0');
+      const seconds = String(now.getSeconds()).padStart(2,'0');
+      const ampm = now.getHours() >= 12 ? 'pm' : 'am';
+      document.getElementById('time').innerText = `${hours}:${minutes}:${seconds}${ampm}`;
+      document.getElementById('date').innerText = now.toDateString();
+      const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
+      document.getElementById('weekday').innerText = weekday;
     }
 
-    updateClock();
-    setInterval(updateClock, 1000);
+    updateTime();
+    setInterval(updateTime, 1000);
   </script>
 </body>
 </html>
