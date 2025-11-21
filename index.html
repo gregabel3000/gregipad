@@ -24,7 +24,6 @@
     #time { 
       font-size:120px; 
       font-weight:600; 
-      /* Optional: text-shadow for visibility over images */
       text-shadow: 2px 2px 6px rgba(0,0,0,0.7); 
     }
     #date { 
@@ -60,12 +59,12 @@
   <script>
     // --- Random Background ---
     const images = [
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG1.PNG",
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG2.PNG",
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG3.PNG",
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG4.PNG",
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG5.PNG",
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG6.PNG"
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG1.png",
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG2.png",
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG3.png",
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG4.png",
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG5.png",
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG6.png"
     ];
     const randomIndex = Math.floor(Math.random() * images.length);
     document.body.style.backgroundImage = `url('${images[randomIndex]}')`;
