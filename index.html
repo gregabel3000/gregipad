@@ -2,91 +2,96 @@
 <html>
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>iPad Dashboard v13</title>
   <style>
     html, body {
-      height: 100%;
-      width: 100%;
-      margin: 0;
-      padding: 0;
+      margin:0;
+      padding:0;
+      width:100%;
+      height:100%;
+      overflow:hidden;
+      background-color:black;
+      font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
     }
     body {
-      background-color: black;
-      color: white;
-      font-family: -apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      justify-content: flex-start;
-      padding: 20px;
+      color:white;
+      display:flex;
+      flex-direction:column;
+      align-items:flex-start;
+      justify-content:flex-start;
+      padding:20px;
+      text-shadow: 2px 2px 8px rgba(0,0,0,0.8);
       background-size: cover;
-      background-position: center;
+      background-position: center center;
       background-repeat: no-repeat;
     }
-    #time {
-      font-size: 120px;
-      font-weight: 600;
-      text-shadow: 3px 3px 8px rgba(0,0,0,0.7);
-    }
-    #date {
-      font-size: 40px;
-      margin-top: 10px;
-      text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
-    }
-    #day {
-      font-size: 35px;
-      margin-top: 5px;
-      text-shadow: 2px 2px 6px rgba(0,0,0,0.7);
-    }
+    #time { font-size:120px; font-weight:600; }
+    #date { font-size:40px; margin-top:10px; }
+    #day { font-size:36px; margin-top:5px; }
     #version-badge {
-      position: fixed;
-      top: 12px;
-      right: 12px;
-      background: rgba(255,255,255,0.08);
-      color: #fff;
-      padding: 6px 10px;
-      border-radius: 6px;
-      font-size: 13px;
-      border: 1px solid rgba(255,255,255,0.04);
-      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+      position:fixed;
+      top:12px;
+      right:12px;
+      background:rgba(255,255,255,0.08);
+      color:#fff;
+      padding:6px 10px;
+      border-radius:6px;
+      font-size:13px;
+      border:1px solid rgba(255,255,255,0.04);
+      box-shadow:0 2px 6px rgba(0,0,0,0.6);
     }
   </style>
 </head>
 <body>
   <div id="time">--:--:--</div>
   <div id="date">Loading date...</div>
-  <div id="day"></div>
+  <div id="day">Loading day...</div>
   <div id="version-badge">v13</div>
 
   <script>
-    // Update time, date, and day of week
-    function updateTime() {
-      const now = new Date();
-      const hours = now.getHours() % 12 || 12;
-      const minutes = String(now.getMinutes()).padStart(2,'0');
-      const seconds = String(now.getSeconds()).padStart(2,'0');
-      const ampm = now.getHours() >= 12 ? 'pm' : 'am';
-      document.getElementById('time').innerText = `${hours}:${minutes}:${seconds}${ampm}`;
-      document.getElementById('date').innerText = now.toDateString();
-      document.getElementById('day').innerText = now.toLocaleDateString('en-US', { weekday: 'long' });
+    // List of background images
+    var images = [
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG1.png",
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG2.png",
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG3.png",
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG4.png",
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG5.png",
+      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG6.png"
+    ];
+
+    // Pick a random background
+    function pickBackground() {
+      var idx = Math.floor(Math.random() * images.length);
+      document.body.style.backgroundImage = "url('" + images[idx] + "')";
     }
+    pickBackground();
+
+    // Update time and date
+    function updateTime() {
+      var now = new Date();
+      var hours = now.getHours() % 12;
+      if(hours === 0) { hours = 12; }
+      var minutes = now.getMinutes();
+      if(minutes < 10) { minutes = "0" + minutes; }
+      var seconds = now.getSeconds();
+      if(seconds < 10) { seconds = "0" + seconds; }
+      var ampm = now.getHours() >= 12 ? 'pm' : 'am';
+      document.getElementById('time').innerText = hours + ":" + minutes + ":" + seconds + ampm;
+
+      var month = now.getMonth() + 1;
+      var dayNum = now.getDate();
+      var year = now.getFullYear();
+      document.getElementById('date').innerText = month + "/" + dayNum + "/" + year;
+
+      var days = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+      document.getElementById('day').innerText = days[now.getDay()];
+    }
+
     updateTime();
     setInterval(updateTime, 1000);
-
-    // Random background from six images
-    const images = [
-      'https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG1.png',
-      'https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG2.png',
-      'https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG3.png',
-      'https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG4.png',
-      'https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG5.png',
-      'https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG6.png'
-    ];
-    const randomIndex = Math.floor(Math.random() * images.length);
-    document.body.style.backgroundImage = `url(${images[randomIndex]})`;
   </script>
 </body>
 </html>
