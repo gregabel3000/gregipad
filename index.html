@@ -7,7 +7,7 @@
   <style>
     body {
       margin:0;
-      padding:20px;
+      padding:0;
       height:100vh;
       width:100vw;
       background-color:black;
@@ -17,6 +17,7 @@
       flex-direction:column;
       align-items:flex-start;
       justify-content:flex-start;
+      padding:20px;
     }
     #time { font-size:120px; font-weight:600; }
     #date { font-size:40px; margin-top:10px; }
@@ -31,16 +32,19 @@
   <div id="version-badge">v9</div>
 
   <script>
+    // Simple array for weekday names
+    var weekdays = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+
     function updateTime() {
-      const now = new Date();
-      const hours = now.getHours() % 12 || 12;
-      const minutes = String(now.getMinutes()).padStart(2,'0');
-      const seconds = String(now.getSeconds()).padStart(2,'0');
-      const ampm = now.getHours() >= 12 ? 'pm' : 'am';
-      document.getElementById('time').innerText = `${hours}:${minutes}:${seconds}${ampm}`;
-      document.getElementById('date').innerText = now.toDateString();
-      const weekday = now.toLocaleDateString('en-US', { weekday: 'long' });
-      document.getElementById('weekday').innerText = weekday;
+      var now = new Date();
+      var hours = now.getHours() % 12 || 12;
+      var minutes = (now.getMinutes() < 10 ? "0" : "") + now.getMinutes();
+      var seconds = (now.getSeconds() < 10 ? "0" : "") + now.getSeconds();
+      var ampm = now.getHours() >= 12 ? "pm" : "am";
+
+      document.getElementById('time').innerText = hours + ":" + minutes + ":" + seconds + ampm;
+      document.getElementById('date').innerText = now.getMonth()+1 + "/" + now.getDate() + "/" + now.getFullYear();
+      document.getElementById('weekday').innerText = weekdays[now.getDay()];
     }
 
     updateTime();
