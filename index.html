@@ -48,7 +48,7 @@
     // Fetch weather dynamically (won't block page load)
     async function loadWeather() {
       const weatherEl = document.getElementById('weather');
-      const url = "https://wttr.in/Greenfield,MA?format=2&u"; // simple emoji+temp format
+      const url = "https://wttr.in/Greenfield,MA?format=3&u"; // simple emoji+temp format
       try {
         const res = await fetch(url);
         if(res.ok) {
