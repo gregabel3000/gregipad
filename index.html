@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <title>iPad Dashboard v14</title>
+  <title>iPad Dashboard v15</title>
   <style>
     html, body {
       margin:0;
@@ -27,6 +27,7 @@
       background-size: cover;
       background-position: center center;
       background-repeat: no-repeat;
+      transition: background-image 1s ease-in-out;
     }
     #time { font-size:120px; font-weight:600; }
     #date { font-size:40px; margin-top:10px; }
@@ -49,20 +50,16 @@
   <div id="time">--:--:--</div>
   <div id="date">Loading date...</div>
   <div id="day">Loading day...</div>
-  <div id="version-badge">v14</div>
+  <div id="version-badge">v15</div>
 
   <script>
-    // List of background images
-    var images = [
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG1.png",
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG2.png",
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG3.png",
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG4.png",
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG5.png",
-      "https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG6.png"
-    ];
+    // Background images
+    var images = [];
+    for(var i=1; i<=32; i++){
+      images.push("https://raw.githubusercontent.com/gregabel3000/gregipad/refs/heads/main/images/BG" + i + ".png");
+    }
 
-    // Pick a random background
+    // Pick random background
     function pickBackground() {
       var idx = Math.floor(Math.random() * images.length);
       document.body.style.backgroundImage = "url('" + images[idx] + "')";
@@ -92,6 +89,21 @@
 
     updateTime();
     setInterval(updateTime, 1000);
+
+    // Reload at 1:00 AM
+    function scheduleReload() {
+      var now = new Date();
+      var next = new Date();
+      next.setHours(1,0,0,0); // 1:00 AM today
+      if(next <= now){
+        next.setDate(next.getDate() + 1); // if already past 1 AM, schedule for tomorrow
+      }
+      var timeout = next - now;
+      setTimeout(function(){
+        location.reload();
+      }, timeout);
+    }
+    scheduleReload();
   </script>
 </body>
 </html>
