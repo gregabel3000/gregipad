@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>iPad Dashboard v6.0</title>
+  <title>iPad Dashboard v7.0</title>
   <style>
     body {
       margin:0;
@@ -12,7 +12,7 @@
       width:100vw;
       background-color:black;
       color:white;
-      font-family:-apple-system,BlinkMacSystemFont,"Helvetica Neue",sans-serif;
+      font-family:-apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
       display:flex;
       flex-direction:column;
       align-items:flex-start;
@@ -21,18 +21,41 @@
     }
     #time { font-size:120px; font-weight:600; }
     #date { font-size:40px; margin-top:10px; }
-    #weather { font-size:80px; margin-top:30px; white-space:pre-line; }
-    #version-badge { position:fixed; top:12px; right:12px; background:rgba(255,255,255,0.08); color:#fff; padding:6px 10px; border-radius:6px; font-size:13px; border:1px solid rgba(255,255,255,0.04); box-shadow:0 2px 6px rgba(0,0,0,0.6);}
+    #weatherimg {
+      margin-top:40px;
+      width:600px; 
+      max-width:90vw;
+    }
+    #version-badge {
+      position:fixed;
+      top:12px;
+      right:12px;
+      background:rgba(255,255,255,0.08);
+      color:#fff;
+      padding:6px 10px;
+      border-radius:6px;
+      font-size:13px;
+      border:1px solid rgba(255,255,255,0.04);
+      box-shadow:0 2px 6px rgba(0,0,0,0.6);
+    }
   </style>
 </head>
 <body>
+
   <div id="time">--:--:--</div>
   <div id="date">Loading date...</div>
-  <div id="weather">Loading weather...</div>
-  <div id="version-badge">v6.0</div>
+
+  <!-- WEATHER IMAGE instead of JS fetch -->
+  <img
+    id="weatherimg"
+    src="https://wttr.in/Greenfield,MA.png?format=2&u"
+    alt="Weather loading..."
+  >
+
+  <div id="version-badge">v7.0</div>
 
   <script>
-    // Update time and date
+    // Update time + date
     function updateTime() {
       const now = new Date();
       const hours = now.getHours() % 12 || 12;
@@ -42,29 +65,18 @@
       document.getElementById('time').innerText = `${hours}:${minutes}:${seconds} ${ampm}`;
       document.getElementById('date').innerText = now.toDateString();
     }
+
     updateTime();
     setInterval(updateTime, 1000);
 
-    // Fetch weather dynamically (won't block page load)
-    async function loadWeather() {
-      const weatherEl = document.getElementById('weather');
-      const url = "https://wttr.in/Greenfield,MA?format=3&u"; // simple emoji+temp format
-      try {
-        const res = await fetch(url);
-        if(res.ok) {
-          const text = await res.text();
-          weatherEl.innerText = text;
-        } else {
-          weatherEl.innerText = "Weather unavailable";
-        }
-      } catch(e) {
-        weatherEl.innerText = "Weather fetch failed";
-      }
+    // Refresh the weather image every 15 minutes
+    function refreshWeatherImage() {
+      const img = document.getElementById('weatherimg');
+      img.src = `https://wttr.in/Greenfield,MA.png?format=2&u&cachebuster=${Date.now()}`;
     }
 
-    loadWeather();
-    // Optional: refresh every 10 minutes
-    setInterval(loadWeather, 600000);
+    setInterval(refreshWeatherImage, 900000); // 15 min
   </script>
+
 </body>
 </html>
